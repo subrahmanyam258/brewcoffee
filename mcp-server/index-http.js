@@ -38,6 +38,10 @@ app.get("/health", (req, res) => {
 
 // Main MCP endpoint - handles all requests
 app.post("/mcp", async (req, res) => {
+  // Prevent caching
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+
   console.error("POST /mcp hit!");
   console.error("Body:", JSON.stringify(req.body));
 
