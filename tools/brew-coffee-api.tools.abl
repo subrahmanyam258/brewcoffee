@@ -1,0 +1,24 @@
+TOOLS:
+  name: "Brew Coffee API"
+  description: "API for managing coffee franchise menu, operating hours, and location information across multiple cities"
+  base_url: "https://pmz9p6sb-3000.inc1.devtunnels.ms"
+  timeout: 5000
+  retry: 3
+
+  get_menu() -> Menu
+    type: http
+    endpoint: "/api/menu"
+    method: GET
+    description: "Retrieves the complete coffee and food menu with prices and categories. The menu is consistent across all franchise locations and includes hot coffee, cold coffee, pastries, and breakfast items."
+
+  get_hours(day?: string) -> Hours
+    type: http
+    endpoint: "/api/hours"
+    method: GET
+    description: "Returns operating hours for the coffee shop. Without parameters, returns hours for all days of the week (Monday-Sunday). With the optional 'day' parameter, returns hours for a specific day. Hours may vary by day (e.g., extended hours on weekends)."
+
+  get_location(city?: string) -> Location
+    type: http
+    endpoint: "/api/location"
+    method: GET
+    description: "Fetches detailed location information. Without parameters, returns all franchise locations. With the optional 'city' parameter, returns details for a specific city including full address, phone number, and GPS coordinates. Available cities: New York, Los Angeles, Chicago, San Francisco, and Seattle. City parameter is case-insensitive."
