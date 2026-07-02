@@ -38,6 +38,9 @@ app.get("/health", (req, res) => {
 
 // Main MCP endpoint - handles all requests
 app.post("/mcp", async (req, res) => {
+  console.error("POST /mcp hit!");
+  console.error("Body:", JSON.stringify(req.body));
+
   const { jsonrpc, id, method, params } = req.body;
 
   console.error(`Received: ${method}`);
@@ -194,10 +197,17 @@ app.post("/mcp", async (req, res) => {
   }
 });
 
+// Catch-all for debugging
+app.use((req, res) => {
+  console.error(`404: ${req.method} ${req.path}`);
+  res.status(404).send("Not Found");
+});
+
 // Start server
 app.listen(MCP_PORT, () => {
   console.error(`☕ Brew Coffee MCP Server (HTTP) running on http://localhost:${MCP_PORT}`);
   console.error(`\nMCP Endpoint: http://localhost:${MCP_PORT}/mcp`);
   console.error(`Health Check: http://localhost:${MCP_PORT}/health`);
   console.error(`\nRegister with: http://localhost:${MCP_PORT}/mcp`);
+  console.error(`\nEnvironment: PORT=${process.env.PORT}, MCP_PORT=${process.env.MCP_PORT}`);
 });
