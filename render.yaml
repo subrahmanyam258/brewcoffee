@@ -1,0 +1,25 @@
+services:
+  # Main Coffee API
+  - type: web
+    name: brew-coffee-api
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: NODE_ENV
+        value: production
+
+  # MCP Server
+  - type: web
+    name: brew-coffee-mcp-server
+    runtime: node
+    rootDir: mcp-server
+    buildCommand: npm install
+    startCommand: npm run start:http
+    envVars:
+      - key: MCP_PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production

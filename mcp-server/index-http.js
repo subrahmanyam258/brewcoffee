@@ -4,9 +4,9 @@ import express from "express";
 import cors from "cors";
 import axios from "axios";
 
-const BASE_URL = "https://pmz9p6sb-3000.inc1.devtunnels.ms";
+const BASE_URL = process.env.BASE_URL || "https://pmz9p6sb-3000.inc1.devtunnels.ms";
 const TIMEOUT = 5000;
-const MCP_PORT = process.env.MCP_PORT || 3002;
+const MCP_PORT = process.env.PORT || process.env.MCP_PORT || 3002;
 
 // Helper function to make HTTP requests with retry logic
 async function makeRequest(endpoint, params = {}, retries = 3) {
