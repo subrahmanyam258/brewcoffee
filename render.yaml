@@ -19,7 +19,5 @@ services:
     buildCommand: npm install
     startCommand: npm run start:http
     envVars:
-      - key: MCP_PORT
-        value: 10000
       - key: NODE_ENV
         value: production
