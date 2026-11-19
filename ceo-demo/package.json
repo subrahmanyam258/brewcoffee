@@ -1,0 +1,9 @@
+{
+  "name": "3bb-ceo-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "3BB CEO demo: AIS-style site with a live Web SDK chat",
+  "scripts": { "start": "node server.mjs" },
+  "engines": { "node": ">=18" }
+}
