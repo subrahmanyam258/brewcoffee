@@ -447,7 +447,31 @@
   }
 
   let started = new Set();
+  // Mock-up scenarios replay a scripted conversation in the chat; no session is opened on the platform.
+  async function playMock(token) {
+    setConn('idle', 'Mock-up: scripted, not a live session');
+    $('chatSub').textContent = 'Mock-up · scripted';
+    await sleep(600);
+    for (const step of st.scenario.script || []) {
+      if (token !== runToken) return;
+      const [kind, a, b] = step;
+      if (kind === 'me') { addRow('me', a); await sleep(900); }
+      else if (kind === 'event') { const ev = addEvent(T[st.lang].handoff(a)); await sleep(900); ev.querySelector('.spin')?.remove(); }
+      else if (kind === 'dates') { shown.dates = false; dateTemplate(); }
+      else {
+        curLang = st.lang;
+        $('typing').hidden = false; scrollDown(); await sleep(700); $('typing').hidden = true;
+        const el = addRow('bot', '', a);
+        await typeOut(el, b, token);
+        await sleep(300);
+      }
+    }
+    $('typing').hidden = true;
+    window.__autoDone = true;
+  }
+
   async function start(token) {
+    if (st.scenario.mock) return playMock(token);
     if (started.has(token)) return;
     started.add(token);
     const p = PROFILES[st.profile];
