@@ -27,7 +27,7 @@
   };
 
   const st = { scenario: SCEN[0], lang: SCEN[0].lang, profile: 'daniel', entryOverride: null };
-  let turnEl = null, turnAgents = new Set();
+  let turnEl = null, turnAgents = new Set(), lastDateSaid = '';
   let endTimer = null, pickedDate = null;
   let sdk = null, chat = null, runToken = 0, queue = Promise.resolve(), seen = new Set();
   let curLang = 'th', curAgent = null, used = new Set(), turns = 0, faqs = 0, sentAt = 0, lastBotAt = 0, ended = false, sdkReady = null, autoOn = false;
@@ -201,7 +201,7 @@
       addCard(`<h4>${th ? 'ยอดค้างชำระ' : 'Amount overdue'}</h4><div class="bill-amt">฿${p.amount}</div><div class="bill-row"><span>${th ? 'เบอร์' : 'Line'} •••• ${p.line}</span><span>${th ? 'ครบกำหนด' : 'Due'} ${p.due}</span></div><div class="bill-row"><span>3BB Fibre</span><span class="status">${th ? 'เลยกำหนด' : 'Overdue'}</span></div>`);
       signal('🛡️ Amount protected from barge-in');
       chips(th ? ['ชำระผ่านช่องทางไหนได้บ้าง', 'เช็คคะแนน AIS Points', 'อยากชำระตอนนี้เลย', 'ไม่ว่างค่ะ'] : ['How can I pay?', 'How many AIS Points do I have?', 'I want to pay now', "I'm busy right now"]);
-    } else if (/(ais points\. |คะแนน ais points คงเหลือ)/i.test(text)) {
+    } else if (/(your number has .* ais points|คะแนน ais points คงเหลือ)/i.test(text) && !/(three privileges|แลกสิทธิพิเศษได้สามรายการ)/i.test(text)) {
       tile('tPts', null, th ? 'เพิ่งตรวจสอบ' : 'Balance just checked', 'good');
       const c = addCard(`<h4>${th ? 'AIS Points คงเหลือ' : 'AIS Points balance'}</h4><div class="flexr"><div class="ring"><b>${p.points.toLocaleString()}</b></div><div><b>${esc(p.display[curLang])}</b><br><small>${p.tier} · ${th ? '300 คะแนนหมดอายุ 31 ธ.ค.' : '300 expire 31 Dec'}</small></div></div>`);
       requestAnimationFrame(() => c.querySelector('.ring').style.setProperty('--p', 78));
@@ -239,7 +239,7 @@
       ari('happy', th ? 'บันทึกวันชำระแล้วค่ะ ✓' : 'Promise saved ✓', 2600);
       tile('tBill', th ? 'สัญญาว่าจะชำระ' : 'Promise to pay', pickedDate ? pickedDate.label : (th ? 'บันทึกแล้ว' : 'Date saved'), 'good');
       const pr = profile();
-      const rc = addCard(`<div class="receipt"><h4>🧾 ${th ? 'ใบนัดชำระ' : 'Payment promise'}</h4><div class="r"><span>${th ? 'ลูกค้า' : 'Customer'}</span><b>${esc(pr.display[curLang])}</b></div><div class="r"><span>${th ? 'ยอด' : 'Amount'}</span><b>฿${pr.amount}</b></div><div class="r"><span>${th ? 'วันที่จะชำระ' : 'Pay on'}</span><b>${pickedDate ? pickedDate.label : esc(text.match(/\d+/) ? '' : (th ? 'ตามที่แจ้ง' : 'as agreed'))}</b></div><div class="r"><span>${th ? 'ช่องทาง' : 'Channel'}</span><b>myAIS · Banking app</b></div><span class="stamp">${th ? 'บันทึกแล้ว ✓' : 'PROMISE SAVED ✓'}</span></div>`);
+      const rc = addCard(`<div class="receipt"><h4>🧾 ${th ? 'ใบนัดชำระ' : 'Payment promise'}</h4><div class="r"><span>${th ? 'ลูกค้า' : 'Customer'}</span><b>${esc(pr.display[curLang])}</b></div><div class="r"><span>${th ? 'ยอด' : 'Amount'}</span><b>฿${pr.amount}</b></div><div class="r"><span>${th ? 'วันที่จะชำระ' : 'Pay on'}</span><b>${pickedDate ? pickedDate.label : esc(lastDateSaid || (th ? 'ตามที่แจ้ง' : 'as agreed'))}</b></div><div class="r"><span>${th ? 'ช่องทาง' : 'Channel'}</span><b>myAIS · Banking app</b></div><span class="stamp">${th ? 'บันทึกแล้ว ✓' : 'PROMISE SAVED ✓'}</span></div>`);
       rc.style.padding = '0'; rc.style.border = '0'; rc.style.background = 'transparent'; rc.style.boxShadow = 'none';
     }
     if (agent === 'Lite_Bill_Agent' && /(convenient to pay by|สะดวกมั้ยคะ|back to your bill|กลับมาเรื่องค่าบริการ)/i.test(text)) dateCard();
@@ -411,6 +411,8 @@
     const cue = [...$('lines').children].find((x) => !x.classList.contains('done') && x.dataset.text === text); if (cue) { cue.classList.add('done'); markNext(); }
     document.querySelectorAll('.card .packs, .card .priv').forEach((x) => x.closest('.card').classList.add('old'));
     addRow('me', text); sentAt = Date.now(); lastBotAt = 0;
+    if (/tomorrow|today|monday|tuesday|wednesday|thursday|friday|saturday|sunday|วันนี้|พรุ่งนี้|จันทร์|อังคาร|พุธ|พฤหัส|ศุกร์|เสาร์|อาทิตย์|สิ้นเดือน|\d{1,2}/i.test(text)) lastDateSaid = text.replace(/^(i'?ll pay|i will pay|จะชำระ|จะจ่าย)\s*(on\s*)?/i, '').replace(/(ค่ะ|ครับ)$/, '');
+    if (/^(yes|yeah|sure|ok|okay|ใช่|ได้|สะดวก|โอเค)/i.test(text)) lastDateSaid = curLang === 'th' ? 'พรุ่งนี้' : 'Tomorrow';
     ari('think', sayL('think'));
     const thinkMark = sentAt; setTimeout(() => { if (sentAt === thinkMark && !lastBotAt) ari('idle'); }, 20000);
     if (/^[1-5]$/.test(text)) document.querySelectorAll('.stars').forEach((s) => s.querySelectorAll('button').forEach((x) => x.classList.toggle('on', +x.dataset.n <= +text)));
