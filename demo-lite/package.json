@@ -1,0 +1,9 @@
+{
+  "name": "3bb-demo-lite",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "3BB Demo Lite: AIS-style live chat with Ari, bilingual FAQs, P&P and roaming",
+  "scripts": { "start": "node server.mjs" },
+  "engines": { "node": ">=18" }
+}
