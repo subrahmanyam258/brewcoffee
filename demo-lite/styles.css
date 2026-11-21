@@ -351,3 +351,38 @@ h1, h3, b, .brand, .btn { font-family: 'Kanit', 'Sarabun', sans-serif; }
 /* toast above Ari */
 .mascot .say { bottom: auto; top: -44px; margin: 0; }
 .mascot .think-dots { top: 6px; right: 2px; }
+
+/* ── phone layout ───────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .demobar { gap: 6px; padding: 8px max(10px, env(safe-area-inset-left, 0px)); }
+  .demobar .brand, #conn { display: none; }
+  .demobar .ctl { font-size: 0; gap: 0; }
+  .demobar .ctl select { font-size: 13px; padding: 6px; }
+  .demobar .ctl.grow { flex: 1 1 calc(100% - 70px); min-width: 0; }
+  .demobar .ctl.user { flex: 1 1 120px; min-width: 0; }
+  .demobar .ctl.user select { min-width: 0; width: 100%; }
+  .demobar .btn { padding: 6px 10px; font-size: 15px; } .demobar .btn .bl { display: none; }
+  .demobar .ctl.user { flex: 1 1 100px; }
+  .demobar .seg button { padding: 5px 9px; font-size: 12px; }
+  .stage-wrap { padding: 0; }
+  .stage { height: calc(100dvh - var(--barh, 96px)); min-height: 0; border-radius: 0; border: 0; display: flex; flex-direction: column; }
+  .site { height: auto; flex: none; display: block; }
+  .site-nav, .live-head, .intel { display: none; }
+  .live { width: 100%; min-width: 0; height: auto; padding: 8px 8px 6px; gap: 0; }
+  .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .tile { flex-direction: column; gap: 2px; padding: 6px 4px; text-align: center; border-radius: 12px; animation: none; }
+  .tile .ti { width: 30px; height: 30px; font-size: 17px; border-radius: 9px; }
+  .tile small, .tile em { display: none; }
+  .tile b { font-size: 12px; line-height: 1.2; min-height: 0; overflow-wrap: anywhere; }
+  .chat { position: relative; inset: auto; flex: 1 1 auto; min-height: 0; width: auto; max-height: none; margin: 0 8px 8px; border-radius: 16px; animation: none; }
+  .chat-head { padding: 9px 12px; } .who small { font-size: 11.5px; }
+  .messages { padding: 10px; } .row { max-width: 94%; } .card { width: 100%; }
+  .bubble { font-size: 14px; }
+  .mascot { display: none; }
+  .phone { position: fixed; left: 50%; top: 50%; right: auto; transform: translate(-50%, -50%); width: 230px; height: 430px; z-index: 70; animation: none; }
+  .stage.with-phone .mascot { display: none; }
+  .drawer { top: 0; width: 100vw; border-radius: 0; padding-top: calc(14px + env(safe-area-inset-top, 0px)); }
+  .composer { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .composer input { font-size: 16px; }
+  .fx-route { left: 4vw; width: 92vw; top: 30vh; }
+}

@@ -439,6 +439,11 @@
   // Opened from the SMS link (…/?entry=reminder_link&lang=th): jump straight into the link journey.
   const q = new URLSearchParams(location.search);
   if (q.get('entry') === 'reminder_link') { st.scenario = SCEN.find((x) => x.id === 's2'); st.lang = q.get('lang') === 'en' ? 'en' : 'th'; $('ctlScenario').value = SCEN.indexOf(st.scenario); st.entryOverride = 'reminder_link'; }
+  // The phone layout sizes the stage to the space under the presenter bar.
+  const barH = () => document.documentElement.style.setProperty('--barh', document.querySelector('.demobar').offsetHeight + 'px');
+  barH(); window.addEventListener('resize', barH);
+  // On a phone the SMS phone is an overlay: tap it to dismiss once read.
+  $('phone').addEventListener('click', (e) => { if (window.innerWidth <= 760 && e.target.id !== 'smsLink' && !e.target.closest('#smsLink')) $('phone').hidden = true; });
   $('ctlProfile').value = st.profile;
   syncSeg(); renderPanel();
   run();
