@@ -301,44 +301,53 @@ h1, h3, b, .brand, .btn { font-family: 'Kanit', 'Sarabun', sans-serif; }
 .lines button.done::before { content: '✓'; background: var(--teal); color: #fff; }
 .drawer .pitch { font-size: 14px; }
 
-/* Ari as a vector character: poses change, the character stays in place */
-.mascot { width: 190px; }
+/* Ari v2: one character, jointed arms posed by rotation, eased transitions between poses */
 .ari-svg { width: 180px; height: auto; overflow: visible; filter: drop-shadow(0 10px 14px rgba(0,68,77,.16)); }
-.ari-svg .arm, .ari-svg .mouth, .ari-svg .happy-eyes, .ari-svg .sparkles { display: none; }
-.ari-svg .lids { transform-origin: 130px 88px; transform: scaleY(0); }
-.ari-svg .pupils, .ari-svg .brows { transition: transform .35s ease; }
-.ari-svg .arm-wave { transform-origin: 58px 135px; }
-/* idle: arm up as in the brand pose, blink, occasional small wave */
-.mascot.idle .arm-wave, .mascot.idle .arm-hip, .mascot.idle .mouth-smile { display: inline; }
-.mascot.idle .arm-wave { animation: wave-soft 6s ease-in-out infinite; }
-.mascot .lids { animation: blink 4.5s infinite; }
-/* thinking: look up, hand to chin, small mouth, brows lifted */
-.mascot.think .arm-down, .mascot.think .arm-chin, .mascot.think .mouth-o { display: inline; }
-.mascot.think .pupils { transform: translate(5px, -6px); }
+.ari-svg .armL { transform-origin: 56px 140px; transform: rotate(var(--aL, 150deg)); transition: transform .55s cubic-bezier(.34,1.45,.64,1); }
+.ari-svg .armR { transform-origin: 204px 140px; transform: rotate(var(--aR, -28deg)); transition: transform .55s cubic-bezier(.34,1.45,.64,1); }
+.ari-svg .swingL { transform-origin: 56px 140px; } .ari-svg .swingR { transform-origin: 204px 140px; }
+.ari-svg .upper { transform-origin: 130px 215px; transition: transform .6s cubic-bezier(.34,1.3,.64,1); animation: breathe 4.2s ease-in-out infinite; }
+.ari-svg .pupils { transition: transform .25s ease-out; transform: translate(var(--px, 0px), var(--py, 0px)); }
+.ari-svg .brows { transition: transform .35s ease; }
+.ari-svg .lids { transform-origin: 130px 88px; transform: scaleY(0); animation: blink 4.6s infinite; }
+.ari-svg .mouth-smile, .ari-svg .mouth-o, .ari-svg .open-eyes, .ari-svg .happy-eyes, .ari-svg .sparkles { transition: opacity .3s ease; }
+.ari-svg .mouth-o, .ari-svg .happy-eyes, .ari-svg .sparkles { opacity: 0; }
+.ari-svg .mouth-smile { transform-origin: 134px 146px; }
+/* idle: brand pose, waving hand up, hand on hip, an occasional small wave */
+.mascot.idle .swingL { animation: wave-soft 6s ease-in-out infinite; }
+/* thinking: tilt, look up, hand to chin, small mouth */
+.mascot.think { --aL: 12deg; --aR: 62deg; }
+.mascot.think .upper { transform: rotate(-5deg); }
+.mascot.think .pupils { transform: translate(5px, -7px); }
 .mascot.think .brows { transform: translateY(-5px); }
-.mascot.think .tuft { animation: tuft 1.4s ease-in-out infinite; transform-origin: 140px 56px; }
-/* talking: mouth opens and closes, small gesture */
-.mascot.talk .arm-wave, .mascot.talk .arm-hip, .mascot.talk .mouth-smile { display: inline; }
-.mascot.talk .mouth-smile { transform-origin: 134px 146px; animation: talk .32s ease-in-out infinite; }
-.mascot.talk .arm-wave { animation: wave-soft 1.6s ease-in-out infinite; }
-/* handoff: point towards the chat */
-.mascot.walk .arm-down, .mascot.walk .arm-point, .mascot.walk .mouth-smile { display: inline; }
-.mascot.walk .pupils { transform: translate(6px, 0); }
-.mascot.walk .arm-point { animation: point .8s ease-in-out 3; transform-origin: 204px 140px; }
-/* success: both arms up, happy eyes, sparkles */
-.mascot.happy .arm-wave, .mascot.happy .arm-up, .mascot.happy .mouth-smile, .mascot.happy .happy-eyes, .mascot.happy .sparkles { display: inline; }
-.mascot.happy .pupils, .mascot.happy .eyes > ellipse, .mascot.happy .lids { display: none; }
-.mascot.happy .sparkles { animation: sparkle .9s ease-in-out infinite; transform-origin: 130px 150px; }
-/* goodbye / hello: big wave */
-.mascot.wave .arm-wave, .mascot.wave .arm-hip, .mascot.wave .mouth-smile { display: inline; }
-.mascot.wave .arm-wave { animation: wave-big .55s ease-in-out 5; }
-@keyframes blink { 0%, 92%, 100% { transform: scaleY(0); } 95% { transform: scaleY(1); } }
-@keyframes wave-soft { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-8deg); } 90% { transform: rotate(6deg); } 95% { transform: rotate(-4deg); } }
-@keyframes wave-big { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-18deg); } }
+.mascot.think .mouth-smile { opacity: 0; } .mascot.think .mouth-o { opacity: 1; }
+.mascot.think .lids { animation: none; }
+/* talking: mouth moves, small nod, hand gestures */
+.mascot.talk .mouth-smile { animation: talk .3s ease-in-out infinite; }
+.mascot.talk .upper { animation: nod 1.2s ease-in-out infinite; }
+.mascot.talk .swingL { animation: wave-soft 1.8s ease-in-out infinite; }
+/* pointing at the chat during a handoff */
+.mascot.walk, .mascot.point { --aL: 10deg; --aR: -98deg; }
+.mascot.walk .pupils, .mascot.point .pupils { transform: translate(6px, -1px); }
+.mascot.walk .swingR, .mascot.point .swingR { animation: jab .7s ease-in-out 3; }
+/* success: both arms up, shimmy, happy eyes, sparkles */
+.mascot.happy { --aL: 165deg; --aR: -165deg; }
+.mascot.happy .open-eyes { opacity: 0; } .mascot.happy .happy-eyes, .mascot.happy .sparkles { opacity: 1; }
+.mascot.happy .upper { animation: shimmy .5s ease-in-out 4; }
+.mascot.happy .sparkles { animation: sparkle .9s ease-in-out infinite; }
+/* hello / goodbye: big wave */
+.mascot.wave .swingL { animation: wave-big .5s ease-in-out 6; }
+@keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.006, .994); } }
+@keyframes blink { 0%, 93%, 100% { transform: scaleY(0); } 96% { transform: scaleY(1); } }
+@keyframes wave-soft { 0%, 78%, 100% { transform: rotate(0); } 84% { transform: rotate(-12deg); } 90% { transform: rotate(9deg); } 95% { transform: rotate(-5deg); } }
+@keyframes wave-big { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(-24deg); } }
 @keyframes talk { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(.55); } }
-@keyframes tuft { 50% { transform: rotate(6deg); } }
-@keyframes point { 50% { transform: rotate(-6deg); } }
-@keyframes sparkle { 0%, 100% { opacity: .3; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.05); } }
+@keyframes nod { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-1.6deg); } 75% { transform: rotate(1.6deg); } }
+@keyframes jab { 50% { transform: rotate(-8deg); } }
+@keyframes shimmy { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+@keyframes sparkle { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .ari-svg * { animation: none !important; transition: none !important; } }
+
 /* toast above Ari */
 .mascot .say { bottom: auto; top: -44px; margin: 0; }
 .mascot .think-dots { top: 6px; right: 2px; }

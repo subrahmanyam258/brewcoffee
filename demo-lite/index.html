@@ -75,52 +75,52 @@
       <div class="mascot idle" id="mascot" aria-hidden="true">
         <div class="say" id="say"></div>
         <div class="think-dots"><i></i><i></i><i></i></div>
-        <svg class="ari-svg" viewBox="0 0 260 330" role="img" aria-label="Ari">
-          <defs>
-            <radialGradient id="gBody" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eefc9b"/><stop offset=".45" stop-color="#bfe13d"/><stop offset="1" stop-color="#86b51c"/></radialGradient>
-            <radialGradient id="gLimb" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#dcf47a"/><stop offset="1" stop-color="#9cc82a"/></radialGradient>
-            <radialGradient id="gIris" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#5fbf4a"/><stop offset="1" stop-color="#1d6b2a"/></radialGradient>
-          </defs>
-          <ellipse class="shadow" cx="130" cy="318" rx="70" ry="9" fill="rgba(0,68,77,.16)"/>
-          <!-- legs and feet -->
-          <g class="legs">
-            <path d="M108 205 C104 245 102 270 100 292" stroke="url(#gLimb)" stroke-width="15" stroke-linecap="round" fill="none"/>
-            <path d="M152 205 C156 245 158 270 160 292" stroke="url(#gLimb)" stroke-width="15" stroke-linecap="round" fill="none"/>
-            <ellipse cx="88" cy="300" rx="30" ry="14" fill="url(#gLimb)"/>
-            <ellipse cx="172" cy="300" rx="30" ry="14" fill="url(#gLimb)"/>
-          </g>
-          <!-- arms (only the ones for the current pose are shown) -->
-          <g class="arm arm-wave"><path d="M58 135 C42 112 36 90 40 62" stroke="url(#gLimb)" stroke-width="13" stroke-linecap="round" fill="none"/>
-            <g transform="translate(40 50)"><ellipse rx="17" ry="20" fill="url(#gLimb)"/><rect x="-16" y="-38" width="8" height="24" rx="4" fill="#c5e64f"/><rect x="-6" y="-44" width="8" height="28" rx="4" fill="#c5e64f"/><rect x="4" y="-42" width="8" height="26" rx="4" fill="#c5e64f"/><rect x="13" y="-34" width="7" height="20" rx="3.5" fill="#c5e64f"/><rect x="14" y="-4" width="16" height="8" rx="4" fill="#c5e64f" transform="rotate(-30 14 0)"/></g></g>
-          <g class="arm arm-down"><path d="M56 140 C40 160 34 182 36 200" stroke="url(#gLimb)" stroke-width="13" stroke-linecap="round" fill="none"/><circle cx="36" cy="206" r="12" fill="url(#gLimb)"/></g>
-          <g class="arm arm-hip"><path d="M204 140 C222 150 226 168 214 182" stroke="url(#gLimb)" stroke-width="13" stroke-linecap="round" fill="none"/><ellipse cx="206" cy="186" rx="13" ry="10" fill="url(#gLimb)"/></g>
-          <g class="arm arm-chin"><path d="M204 142 C214 175 196 196 164 190" stroke="url(#gLimb)" stroke-width="13" stroke-linecap="round" fill="none"/><ellipse cx="156" cy="186" rx="14" ry="11" fill="url(#gLimb)"/><rect x="146" y="170" width="7" height="16" rx="3.5" fill="#c5e64f"/></g>
-          <g class="arm arm-point"><path d="M204 140 C224 132 238 124 248 116" stroke="url(#gLimb)" stroke-width="13" stroke-linecap="round" fill="none"/><ellipse cx="250" cy="114" rx="11" ry="9" fill="url(#gLimb)"/><rect x="250" y="106" width="16" height="7" rx="3.5" fill="#c5e64f"/></g>
-          <g class="arm arm-up"><path d="M204 136 C220 114 226 92 222 66" stroke="url(#gLimb)" stroke-width="13" stroke-linecap="round" fill="none"/><ellipse cx="222" cy="56" rx="15" ry="17" fill="url(#gLimb)"/></g>
-          <!-- body -->
-          <circle cx="130" cy="128" r="84" fill="url(#gBody)"/>
-          <!-- tuft -->
-          <path class="tuft" d="M112 52 C104 30 118 12 134 8 C126 22 132 32 140 40 C142 24 156 16 168 18 C156 28 158 44 150 56 Z" fill="url(#gBody)"/>
-          <!-- brows -->
-          <g class="brows"><path d="M86 82 Q102 72 116 82" stroke="#2b3a12" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M146 80 Q160 70 176 80" stroke="#2b3a12" stroke-width="4" stroke-linecap="round" fill="none"/></g>
-          <!-- eyes -->
-          <g class="eyes">
-            <ellipse cx="102" cy="108" rx="15" ry="19" fill="#fff"/><ellipse cx="160" cy="106" rx="15" ry="19" fill="#fff"/>
-            <g class="pupils"><circle cx="105" cy="111" r="10" fill="url(#gIris)"/><circle cx="105" cy="111" r="5" fill="#0b2410"/><circle cx="108" cy="107" r="3" fill="#fff"/>
-              <circle cx="163" cy="109" r="10" fill="url(#gIris)"/><circle cx="163" cy="109" r="5" fill="#0b2410"/><circle cx="166" cy="105" r="3" fill="#fff"/></g>
-            <g class="lids"><ellipse cx="102" cy="108" rx="16" ry="20" fill="#bfe13d"/><ellipse cx="160" cy="106" rx="16" ry="20" fill="#bfe13d"/></g>
-            <g class="happy-eyes"><path d="M88 110 Q102 96 116 110" stroke="#1d3a0d" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M146 108 Q160 94 174 108" stroke="#1d3a0d" stroke-width="5" stroke-linecap="round" fill="none"/></g>
-          </g>
-          <!-- mouths -->
-          <g class="mouth mouth-smile"><path d="M104 146 Q132 186 164 144 Q134 156 104 146 Z" fill="#3a1410"/><path d="M110 148 Q134 156 158 147 L156 153 Q134 160 112 154 Z" fill="#fff"/><path d="M120 168 Q134 160 148 168 Q134 178 120 168 Z" fill="#e2564b"/></g>
-          <g class="mouth mouth-o"><ellipse cx="134" cy="156" rx="9" ry="10" fill="#3a1410"/></g>
-          <!-- headset -->
-          <g class="headset"><path d="M58 112 C56 60 96 34 132 36" stroke="#2a2f33" stroke-width="6" fill="none" stroke-linecap="round"/>
-            <circle cx="56" cy="118" r="17" fill="#3a4046"/><circle cx="56" cy="118" r="11" fill="#8a9399"/><circle cx="56" cy="118" r="5" fill="#2a2f33"/>
-            <path d="M62 130 C74 150 92 158 108 158" stroke="#2a2f33" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="110" cy="158" r="4.5" fill="#2a2f33"/></g>
-          <!-- sparkles for success -->
-          <g class="sparkles"><path d="M28 30 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z" fill="#facc15"/><path d="M236 20 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3z" fill="#22c55e"/><path d="M240 210 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#f472b6"/></g>
-        </svg>
+        <svg class="ari-svg" viewBox="-10 -10 280 340" role="img" aria-label="Ari">
+  <defs>
+    <radialGradient id="gBody" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#eefc9b"/><stop offset=".45" stop-color="#bfe13d"/><stop offset="1" stop-color="#86b51c"/></radialGradient>
+    <radialGradient id="gLimb" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#dcf47a"/><stop offset="1" stop-color="#9cc82a"/></radialGradient>
+    <radialGradient id="gIris" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#5fbf4a"/><stop offset="1" stop-color="#1d6b2a"/></radialGradient>
+  </defs>
+  <ellipse class="shadow" cx="130" cy="318" rx="70" ry="9" fill="rgba(0,68,77,.16)"/>
+  <g class="legs">
+    <path d="M108 205 C104 245 102 270 100 292" stroke="url(#gLimb)" stroke-width="15" stroke-linecap="round" fill="none"/>
+    <path d="M152 205 C156 245 158 270 160 292" stroke="url(#gLimb)" stroke-width="15" stroke-linecap="round" fill="none"/>
+    <ellipse cx="88" cy="300" rx="30" ry="14" fill="url(#gLimb)"/>
+    <ellipse cx="172" cy="300" rx="30" ry="14" fill="url(#gLimb)"/>
+  </g>
+  <g class="upper">
+    <circle cx="130" cy="128" r="84" fill="url(#gBody)"/>
+    <path class="tuft" d="M112 52 C104 30 118 12 134 8 C126 22 132 32 140 40 C142 24 156 16 168 18 C156 28 158 44 150 56 Z" fill="url(#gBody)"/>
+    <g class="brows"><path d="M86 82 Q102 72 116 82" stroke="#2b3a12" stroke-width="4" stroke-linecap="round" fill="none"/><path d="M146 80 Q160 70 176 80" stroke="#2b3a12" stroke-width="4" stroke-linecap="round" fill="none"/></g>
+    <g class="eyes">
+      <g class="open-eyes">
+        <ellipse cx="102" cy="108" rx="15" ry="19" fill="#fff"/><ellipse cx="160" cy="106" rx="15" ry="19" fill="#fff"/>
+        <g class="pupils"><circle cx="105" cy="111" r="10" fill="url(#gIris)"/><circle cx="105" cy="111" r="5" fill="#0b2410"/><circle cx="108" cy="107" r="3" fill="#fff"/>
+          <circle cx="163" cy="109" r="10" fill="url(#gIris)"/><circle cx="163" cy="109" r="5" fill="#0b2410"/><circle cx="166" cy="105" r="3" fill="#fff"/></g>
+        <g class="lids"><ellipse cx="102" cy="108" rx="16" ry="20" fill="#bfe13d"/><ellipse cx="160" cy="106" rx="16" ry="20" fill="#bfe13d"/></g>
+      </g>
+      <g class="happy-eyes"><path d="M88 110 Q102 96 116 110" stroke="#1d3a0d" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M146 108 Q160 94 174 108" stroke="#1d3a0d" stroke-width="5" stroke-linecap="round" fill="none"/></g>
+    </g>
+    <g class="mouth-smile"><path d="M104 146 Q132 186 164 144 Q134 156 104 146 Z" fill="#3a1410"/><path d="M110 148 Q134 156 158 147 L156 153 Q134 160 112 154 Z" fill="#fff"/><path d="M120 168 Q134 160 148 168 Q134 178 120 168 Z" fill="#e2564b"/></g>
+    <ellipse class="mouth-o" cx="134" cy="156" rx="9" ry="10" fill="#3a1410"/>
+    <g class="headset"><path d="M58 112 C56 60 96 34 132 36" stroke="#2a2f33" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <circle cx="56" cy="118" r="17" fill="#3a4046"/><circle cx="56" cy="118" r="11" fill="#8a9399"/><circle cx="56" cy="118" r="5" fill="#2a2f33"/>
+      <path d="M62 130 C74 150 92 158 108 158" stroke="#2a2f33" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="110" cy="158" r="4.5" fill="#2a2f33"/></g>
+    <!-- jointed arms: drawn hanging down from the shoulder, posed by rotation -->
+    <g class="armL"><g class="swingL">
+      <path d="M56 140 L56 204" stroke="#b2d936" stroke-width="13" stroke-linecap="round"/>
+      <ellipse cx="56" cy="216" rx="14" ry="16" fill="url(#gLimb)"/>
+      <rect x="44" y="222" width="7" height="16" rx="3.5" fill="#c5e64f"/><rect x="52" y="225" width="7" height="17" rx="3.5" fill="#c5e64f"/><rect x="60" y="222" width="7" height="16" rx="3.5" fill="#c5e64f"/>
+      <rect x="66" y="208" width="14" height="7" rx="3.5" fill="#c5e64f"/>
+    </g></g>
+    <g class="armR"><g class="swingR">
+      <path d="M204 140 L204 204" stroke="#a9d02f" stroke-width="13" stroke-linecap="round"/>
+      <ellipse cx="204" cy="214" rx="13" ry="14" fill="url(#gLimb)"/>
+      <rect x="182" y="208" width="14" height="7" rx="3.5" fill="#c5e64f"/>
+    </g></g>
+  </g>
+  <g class="sparkles"><path d="M18 30 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4z" fill="#facc15"/><path d="M246 20 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3z" fill="#22c55e"/><path d="M250 210 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#f472b6"/></g>
+</svg>
       </div>
 
       <!-- Chat widget -->

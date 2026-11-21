@@ -67,6 +67,13 @@
     sms: { en: 'Link sent to your phone 📲', th: 'ส่งลิงก์ไปที่มือถือแล้วค่ะ 📲' },
     bye: { en: 'Thank you, goodbye! 👋', th: 'ขอบคุณค่ะ สวัสดีค่ะ 👋' },
   };
+  // Ari's eyes follow the pointer while idle or talking.
+  window.addEventListener('pointermove', (e) => {
+    const m = $('mascot'); if (!m || m.classList.contains('think') || m.classList.contains('walk')) return;
+    const r = m.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height * 0.35;
+    const dx = e.clientX - cx, dy = e.clientY - cy, d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 300);
+    m.style.setProperty('--px', (dx / d * 5 * k).toFixed(1) + 'px'); m.style.setProperty('--py', (dy / d * 4 * k).toFixed(1) + 'px');
+  });
   const sayL = (k, x) => { const v = SAY[k][curLang] || SAY[k].en; return typeof v === 'function' ? v(x) : v; };
 
   function setConn(kind, text) { $('conn').className = 'conn ' + kind; $('conn').lastElementChild.textContent = text; }
