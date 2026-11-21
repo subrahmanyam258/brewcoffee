@@ -440,8 +440,17 @@
   const q = new URLSearchParams(location.search);
   if (q.get('entry') === 'reminder_link') { st.scenario = SCEN.find((x) => x.id === 's2'); st.lang = q.get('lang') === 'en' ? 'en' : 'th'; $('ctlScenario').value = SCEN.indexOf(st.scenario); st.entryOverride = 'reminder_link'; }
   // The phone layout sizes the stage to the space under the presenter bar.
-  const barH = () => document.documentElement.style.setProperty('--barh', document.querySelector('.demobar').offsetHeight + 'px');
+  function barH() { document.documentElement.style.setProperty('--barh', (document.body.classList.contains('bar-collapsed') ? 0 : document.querySelector('.demobar').offsetHeight) + 'px'); }
   barH(); window.addEventListener('resize', barH);
+
+  // Presenter bar: collapsed by default; the choice is remembered in this browser.
+  (() => {
+    const t = document.createElement('button'); t.type = 'button'; t.className = 'bar-toggle'; t.id = 'barToggle';
+    let collapsed = true; try { collapsed = localStorage.getItem('demoLiteBar') !== 'open'; } catch (e) { /* ignore */ }
+    const apply = () => { document.body.classList.toggle('bar-collapsed', collapsed); t.textContent = collapsed ? '☰ Demo controls ▾' : '▴ Hide controls'; t.setAttribute('aria-expanded', String(!collapsed)); if (typeof barH === 'function') barH(); };
+    t.onclick = () => { collapsed = !collapsed; try { localStorage.setItem('demoLiteBar', collapsed ? 'closed' : 'open'); } catch (e) { /* ignore */ } apply(); };
+    document.body.appendChild(t); apply();
+  })();
   // On a phone the SMS phone is an overlay: tap it to dismiss once read.
   $('phone').addEventListener('click', (e) => { if (window.innerWidth <= 760 && e.target.id !== 'smsLink' && !e.target.closest('#smsLink')) $('phone').hidden = true; });
   $('ctlProfile').value = st.profile;
