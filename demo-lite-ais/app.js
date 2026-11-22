@@ -281,13 +281,14 @@
   // Card payment template (web only): shown when Ari offers to take the payment in the chat.
   function payCard() {
     const th = curLang === 'th', pr = profile();
+    const cd = pr.card || { holder: pr.display.en.toUpperCase(), number: '4242 4242 4242 4242', exp: '12/28' };
     document.querySelectorAll('.card.datecard, .card.paycard').forEach((x) => x.remove());
     const c = addCard(`<div class="pay-head"><span class="pay-brand">3BB <b>Fibre</b></span><span class="pay-lock">🔒 ${th ? 'ชำระอย่างปลอดภัย' : 'Secure payment'}</span></div>
       <div class="pay-amt"><small>${th ? 'ยอดที่ต้องชำระ' : 'Amount due'}</small><b>฿${pr.amount}</b><small>${th ? 'อินเทอร์เน็ตบ้าน ลงท้าย' : 'Home internet ending'} ${pr.line}</small></div>
       <div class="pay-tabs"><button class="on" data-m="card">💳 ${th ? 'บัตร' : 'Card'}</button><button data-m="qr">▦ PromptPay</button></div>
       <div class="pay-body" data-m="card">
-        <div class="cc"><div class="cc-chip"></div><div class="cc-num">4242 •••• •••• 4242</div><div class="cc-row"><span>${esc(pr.display.en.toUpperCase())}</span><span>12/28</span></div><div class="cc-logo">VISA</div></div>
-        <div class="pay-fields"><label>${th ? 'หมายเลขบัตร' : 'Card number'}<input value="4242 4242 4242 4242" inputmode="numeric"></label><div class="pf2"><label>${th ? 'หมดอายุ' : 'Expiry'}<input value="12/28"></label><label>CVV<input value="•••"></label></div></div>
+        <div class="cc"><div class="cc-chip"></div><div class="cc-num"></div><div class="cc-row"><span class="cc-name"></span><span class="cc-exp"></span></div><div class="cc-logo"></div></div>
+        <div class="pay-fields"><label>${th ? 'ชื่อบนบัตร' : 'Name on card'}<input class="f-name" value="${esc(cd.holder)}" autocomplete="cc-name" maxlength="26"></label><label>${th ? 'หมายเลขบัตร' : 'Card number'}<input class="f-num" value="${esc(cd.number)}" inputmode="numeric" autocomplete="cc-number" maxlength="19"></label><div class="pf2"><label>${th ? 'หมดอายุ' : 'Expiry'}<input class="f-exp" value="${esc(cd.exp)}" inputmode="numeric" maxlength="5" placeholder="MM/YY"></label><label>CVV<input class="f-cvv" type="password" value="123" inputmode="numeric" maxlength="4"></label></div></div>
       </div>
       <div class="pay-body" data-m="qr" hidden><div class="qr"></div><small>${th ? 'สแกนด้วยแอปธนาคาร (เดโม)' : 'Scan with your banking app (demo)'}</small></div>
       <button class="pay-btn">${th ? 'ชำระ' : 'Pay'} ฿${pr.amount}</button>
@@ -299,6 +300,21 @@
       c.querySelectorAll('.pay-body').forEach((x) => (x.hidden = x.dataset.m !== b.dataset.m));
     }));
     c.querySelector('.pay-alt').onclick = () => { c.remove(); dateCard(); };
+    // The card face follows what the customer types: name, number (masked), expiry and brand.
+    const fName = c.querySelector('.f-name'), fNum = c.querySelector('.f-num'), fExp = c.querySelector('.f-exp');
+    const brand = (d) => (/^4/.test(d) ? 'VISA' : /^(5[1-5]|2[2-7])/.test(d) ? 'Mastercard' : /^35/.test(d) ? 'JCB' : /^3[47]/.test(d) ? 'AMEX' : '');
+    const digits = () => fNum.value.replace(/\D/g, '').slice(0, 16);
+    const paint = () => {
+      const d = digits(), groups = (d.padEnd(16, '•').match(/.{1,4}/g) || []);
+      c.querySelector('.cc-num').textContent = groups.map((g, i) => (i === 0 || i === 3 ? g : (g.replace(/\d/g, '•')))).join(' ');
+      c.querySelector('.cc-name').textContent = (fName.value.trim() || (th ? 'ชื่อบนบัตร' : 'NAME ON CARD')).toUpperCase();
+      c.querySelector('.cc-exp').textContent = fExp.value.trim() || 'MM/YY';
+      const b = brand(d); c.querySelector('.cc-logo').textContent = b; c.querySelector('.cc').dataset.brand = b.toLowerCase();
+    };
+    fNum.oninput = () => { const d = digits(); fNum.value = (d.match(/.{1,4}/g) || []).join(' '); paint(); };
+    fExp.oninput = () => { const d = fExp.value.replace(/\D/g, '').slice(0, 4); fExp.value = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d; paint(); };
+    fName.oninput = paint;
+    paint();
     const btn = c.querySelector('.pay-btn');
     btn.onclick = async () => {
       if (btn.disabled) return;
@@ -308,7 +324,7 @@
       btn.classList.remove('busy'); btn.classList.add('ok'); btn.innerHTML = `✓ ${th ? 'ชำระเรียบร้อย' : 'Payment successful'}`;
       c.querySelector('.pay-alt').remove();
       const ref = 'TXN' + String(Date.now()).slice(-8);
-      c.insertAdjacentHTML('beforeend', `<div class="pay-done"><div class="pd-check">✓</div><div><b>฿${pr.amount} ${th ? 'ชำระแล้ว' : 'paid'}</b><small>${th ? 'เลขอ้างอิง' : 'Ref'} ${ref} · VISA •••• 4242</small></div></div>`);
+      c.insertAdjacentHTML('beforeend', `<div class="pay-done"><div class="pd-check">✓</div><div><b>฿${pr.amount} ${th ? 'ชำระแล้ว' : 'paid'}</b><small>${th ? 'เลขอ้างอิง' : 'Ref'} ${ref} · ${brand(digits()) || (th ? 'บัตร' : 'Card')} •••• ${digits().slice(-4)} · ${esc(fName.value.trim().toUpperCase())}</small></div></div>`);
       scrollDown();
       await sleep(700);
       send(th ? 'ชำระด้วยบัตรเรียบร้อยแล้วค่ะ' : "I've paid by card");

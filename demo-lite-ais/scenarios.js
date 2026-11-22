@@ -5,7 +5,7 @@ window.LITE_PROFILES = {
   somchai: {
     label: 'คุณสมชาย ใจดี · ฿2,179.00 · Gold',
     display: { th: 'คุณสมชาย ใจดี', en: 'Somchai Jaidee' },
-    initials: 'สช', tier: 'Gold', points: 2450, amount: '2,179.00', line: '4471', due: '08 Nov 2026',
+    initials: 'สช', tier: 'Gold', points: 2450, amount: '2,179.00', card: { holder: 'SOMCHAI JAIDEE', number: '5412 7534 1209 4471', exp: '09/27' }, line: '4471', due: '08 Nov 2026',
     attrs: {
       customer_name_en: 'Somchai', customer_name_th: 'สมชาย',
       bill_amount_en: '2,179 baht', bill_amount_th: '2,179 บาท',
@@ -17,7 +17,7 @@ window.LITE_PROFILES = {
   nawaporn: {
     label: 'คุณนวพร ทดสอบ · ฿5,197.60 · Platinum',
     display: { th: 'คุณนวพร ทดสอบ', en: 'Nawaporn Thodsob' },
-    initials: 'นว', tier: 'Platinum', points: 1280, amount: '5,197.60', line: '0320', due: '11 Nov 2026',
+    initials: 'นว', tier: 'Platinum', points: 1280, amount: '5,197.60', card: { holder: 'NAWAPORN THODSOB', number: '3530 1113 3330 0320', exp: '03/29' }, line: '0320', due: '11 Nov 2026',
     attrs: {
       customer_name_en: 'Nawaporn', customer_name_th: 'นวพร',
       bill_amount_en: '5,197.60 baht', bill_amount_th: '5,197 บาท 60 สตางค์',
@@ -28,7 +28,7 @@ window.LITE_PROFILES = {
   daniel: {
     label: 'Daniel Brooks · ฿799.00 · Classic',
     display: { th: 'คุณแดเนียล บรู๊คส์', en: 'Daniel Brooks' },
-    initials: 'DB', tier: 'Classic', points: 1280, amount: '799.00', line: '7781', due: '14 Nov 2026',
+    initials: 'DB', tier: 'Classic', points: 1280, amount: '799.00', card: { holder: 'DANIEL BROOKS', number: '4242 4242 4242 7781', exp: '12/28' }, line: '7781', due: '14 Nov 2026',
     attrs: {
       customer_name_en: 'Daniel', customer_name_th: 'แดเนียล',
       bill_amount_en: '799 baht', bill_amount_th: '799 บาท',
