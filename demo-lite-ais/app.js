@@ -242,7 +242,13 @@
       const rc = addCard(`<div class="receipt"><h4>🧾 ${th ? 'ใบนัดชำระ' : 'Payment promise'}</h4><div class="r"><span>${th ? 'ลูกค้า' : 'Customer'}</span><b>${esc(pr.display[curLang])}</b></div><div class="r"><span>${th ? 'ยอด' : 'Amount'}</span><b>฿${pr.amount}</b></div><div class="r"><span>${th ? 'วันที่จะชำระ' : 'Pay on'}</span><b>${pickedDate ? pickedDate.label : esc(lastDateSaid || (th ? 'ตามที่แจ้ง' : 'as agreed'))}</b></div><div class="r"><span>${th ? 'ช่องทาง' : 'Channel'}</span><b>myAIS · Banking app</b></div><span class="stamp">${th ? 'บันทึกแล้ว ✓' : 'PROMISE SAVED ✓'}</span></div>`);
       rc.style.padding = '0'; rc.style.border = '0'; rc.style.background = 'transparent'; rc.style.boxShadow = 'none';
     }
-    if (agent === 'Lite_Bill_Agent' && /(convenient to pay by|สะดวกมั้ยคะ|back to your bill|กลับมาเรื่องค่าบริการ)/i.test(text)) dateCard();
+    if (agent === 'Lite_Bill_Agent' && /(right here in the chat|ในแชทนี้ได้เลย)/i.test(text)) payCard();
+    if (agent === 'Lite_Bill_Agent' && /(paid by card and|ด้วยบัตรเรียบร้อย)/i.test(text)) {
+      signal(th ? '💳 ชำระด้วยบัตรแล้ว' : '💳 Paid by card');
+      ari('happy', th ? 'ชำระเรียบร้อยค่ะ ✓' : 'Paid in full ✓', 2600);
+      tile('tBill', th ? 'ชำระแล้ว' : 'Paid', th ? 'ชำระด้วยบัตร' : 'Paid by card', 'good');
+    }
+    if (agent === 'Lite_Bill_Agent' && /(convenient to pay by|สะดวกมั้ยคะ|back to your bill|กลับมาเรื่องค่าบริการ|which day works|สะดวกชำระวันไหน)/i.test(text)) dateCard();
     return '';
   }
   // Date picker under the payment-date question. Each choice is sent as the customer's own words.
@@ -260,15 +266,53 @@
     };
     const cell = (d, i) => { const lab = i === 0 ? (th ? 'วันนี้' : 'Today') : i === 1 ? (th ? 'พรุ่งนี้' : 'Tomorrow') : (th ? dTh[d.getDay()] : dEn[d.getDay()].slice(0, 3)); return `<button class="day${i === 1 ? ' rec' : ''}" data-i="${i}"><small>${lab}</small><b>${d.getDate()}</b><small>${th ? mTh[d.getMonth()] : mEn[d.getMonth()]}</small></button>`; };
     document.querySelectorAll('.card.datecard').forEach((x) => x.remove());
-    const c = addCard(`<h4>📅 ${th ? 'เลือกวันที่สะดวกชำระ' : 'When can you pay?'}</h4><div class="dates">${days.map(cell).join('')}</div><div class="pick"><input type="date" min="${now.toISOString().slice(0, 10)}"><button>${th ? 'เลือก' : 'Choose'}</button></div>`);
+    const c = addCard(`<h4>📅 ${th ? 'เลือกวันที่สะดวกชำระ' : 'When can you pay?'}</h4><button class="paynow-opt"><span class="pn-ic">💳</span><span class="pn-tx"><b>${th ? 'ชำระตอนนี้เลย' : 'Pay now'}</b><small>${th ? 'บัตรเครดิต/เดบิต · ปลอดภัย ไม่มีค่าธรรมเนียม' : 'Credit or debit card · secure, no fee'}</small></span><span class="pn-go">›</span></button><div class="or"><span>${th ? 'หรือเลือกวันที่จะชำระ' : 'or pick a day to pay'}</span></div><div class="dates">${days.map(cell).join('')}</div><div class="pick"><input type="date" min="${now.toISOString().slice(0, 10)}"><button>${th ? 'เลือก' : 'Choose'}</button></div>`);
     const choose = (d, i, btn) => {
       c.querySelectorAll('.day').forEach((x) => x.classList.remove('sel')); if (btn) btn.classList.add('sel');
       pickedDate = { d: d.getDate(), mon: th ? mTh[d.getMonth()] : mEn[d.getMonth()], label: `${th ? dTh[d.getDay()] : dEn[d.getDay()]} ${d.getDate()} ${th ? mTh[d.getMonth()] : mEn[d.getMonth()]} ${d.getFullYear()}` };
       send(say(d, i));
     };
     c.classList.add('datecard');
+    c.querySelector('.paynow-opt').onclick = () => { c.querySelectorAll('button').forEach((x) => (x.disabled = true)); send(th ? 'ขอชำระตอนนี้เลยค่ะ' : 'I want to pay now'); };
     c.querySelectorAll('.day').forEach((b) => (b.onclick = () => choose(days[+b.dataset.i], +b.dataset.i, b)));
     c.querySelector('.pick button').onclick = () => { const v = c.querySelector('input').value; if (!v) return; const d = new Date(v + 'T12:00:00'); const diff = Math.round((d - new Date(now.toDateString())) / 864e5); choose(d, diff <= 1 ? Math.max(diff, 0) : 9, null); };
+  }
+
+  // Card payment template (web only): shown when Ari offers to take the payment in the chat.
+  function payCard() {
+    const th = curLang === 'th', pr = profile();
+    document.querySelectorAll('.card.datecard, .card.paycard').forEach((x) => x.remove());
+    const c = addCard(`<div class="pay-head"><span class="pay-brand">3BB <b>Fibre</b></span><span class="pay-lock">🔒 ${th ? 'ชำระอย่างปลอดภัย' : 'Secure payment'}</span></div>
+      <div class="pay-amt"><small>${th ? 'ยอดที่ต้องชำระ' : 'Amount due'}</small><b>฿${pr.amount}</b><small>${th ? 'อินเทอร์เน็ตบ้าน ลงท้าย' : 'Home internet ending'} ${pr.line}</small></div>
+      <div class="pay-tabs"><button class="on" data-m="card">💳 ${th ? 'บัตร' : 'Card'}</button><button data-m="qr">▦ PromptPay</button></div>
+      <div class="pay-body" data-m="card">
+        <div class="cc"><div class="cc-chip"></div><div class="cc-num">4242 •••• •••• 4242</div><div class="cc-row"><span>${esc(pr.display.en.toUpperCase())}</span><span>12/28</span></div><div class="cc-logo">VISA</div></div>
+        <div class="pay-fields"><label>${th ? 'หมายเลขบัตร' : 'Card number'}<input value="4242 4242 4242 4242" inputmode="numeric"></label><div class="pf2"><label>${th ? 'หมดอายุ' : 'Expiry'}<input value="12/28"></label><label>CVV<input value="•••"></label></div></div>
+      </div>
+      <div class="pay-body" data-m="qr" hidden><div class="qr"></div><small>${th ? 'สแกนด้วยแอปธนาคาร (เดโม)' : 'Scan with your banking app (demo)'}</small></div>
+      <button class="pay-btn">${th ? 'ชำระ' : 'Pay'} ฿${pr.amount}</button>
+      <button class="pay-alt">${th ? 'ขอเลือกวันชำระแทน' : 'Choose a day to pay instead'}</button>`);
+    c.classList.add('paycard');
+    const qr = c.querySelector('.qr'); qr.innerHTML = Array.from({ length: 121 }, (_, i) => `<i class="${(i * 7 + (i % 11) * 3) % 5 < 2 ? 'on' : ''}"></i>`).join('');
+    c.querySelectorAll('.pay-tabs button').forEach((b) => (b.onclick = () => {
+      c.querySelectorAll('.pay-tabs button').forEach((x) => x.classList.toggle('on', x === b));
+      c.querySelectorAll('.pay-body').forEach((x) => (x.hidden = x.dataset.m !== b.dataset.m));
+    }));
+    c.querySelector('.pay-alt').onclick = () => { c.remove(); dateCard(); };
+    const btn = c.querySelector('.pay-btn');
+    btn.onclick = async () => {
+      if (btn.disabled) return;
+      c.querySelectorAll('button, input').forEach((x) => (x.disabled = true));
+      btn.classList.add('busy'); btn.innerHTML = `<span class="spin"></span> ${th ? 'กำลังดำเนินการ…' : 'Processing…'}`;
+      await sleep(1400);
+      btn.classList.remove('busy'); btn.classList.add('ok'); btn.innerHTML = `✓ ${th ? 'ชำระเรียบร้อย' : 'Payment successful'}`;
+      c.querySelector('.pay-alt').remove();
+      const ref = 'TXN' + String(Date.now()).slice(-8);
+      c.insertAdjacentHTML('beforeend', `<div class="pay-done"><div class="pd-check">✓</div><div><b>฿${pr.amount} ${th ? 'ชำระแล้ว' : 'paid'}</b><small>${th ? 'เลขอ้างอิง' : 'Ref'} ${ref} · VISA •••• 4242</small></div></div>`);
+      scrollDown();
+      await sleep(700);
+      send(th ? 'ชำระด้วยบัตรเรียบร้อยแล้วค่ะ' : "I've paid by card");
+    };
   }
 
   function showSms() {
