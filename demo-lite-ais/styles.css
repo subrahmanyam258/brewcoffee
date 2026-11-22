@@ -410,7 +410,7 @@ body.bar-collapsed { --barh: 0px; }
 .card .or::before, .card .or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
 /* web: card payment template */
-.card.paycard { padding: 0; overflow: hidden; border: 0; box-shadow: 0 14px 30px rgba(0,68,77,.16); }
+.card.paycard { flex-shrink: 0; padding: 0; overflow: hidden; border: 0; box-shadow: 0 14px 30px rgba(0,68,77,.16); }
 .pay-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--teal); color: #fff; font-size: 12px; }
 .pay-brand { font: 500 15px Kanit; letter-spacing: .02em; } .pay-brand b { color: var(--green); }
 .pay-amt { padding: 12px 14px 6px; display: flex; flex-direction: column; }
