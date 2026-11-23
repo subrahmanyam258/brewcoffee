@@ -622,3 +622,24 @@ body.bar-collapsed { --barh: 0px; }
 .dc-inner { overflow: hidden; min-height: 0; }
 .datecard.open .dc-more { grid-template-rows: 1fr; }
 .datecard.open .dc-inner { padding-top: 10px; }
+
+/* Pay now: the primary call to action (bright, pulsing glow, sweeping shine, nudging arrow) */
+.paynow-opt { position: relative; overflow: hidden; padding: 13px 14px; margin: 2px 0 10px; border-radius: 16px;
+  background: linear-gradient(120deg, #8fd400 0%, #7ab800 45%, #5c9a00 100%); color: #fff;
+  box-shadow: 0 10px 22px rgba(122,184,0,.42), inset 0 1px 0 rgba(255,255,255,.35);
+  animation: pnIn .55s cubic-bezier(.2,1.4,.4,1) both, pnGlow 2.2s ease-in-out .8s infinite; }
+.paynow-opt .pn-ic { width: 42px; height: 42px; font-size: 24px; background: rgba(255,255,255,.22); animation: pnWiggle 2.2s ease-in-out .8s infinite; }
+.paynow-opt .pn-tx b { font: 700 17px Kanit; letter-spacing: .01em; text-shadow: 0 1px 0 rgba(0,0,0,.12); }
+.paynow-opt .pn-tx small { opacity: .95; font-size: 12.5px; }
+.paynow-opt .pn-go { font-size: 28px; animation: pnNudge 1.1s ease-in-out infinite; }
+.pn-shine { position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent); transform: skewX(-18deg); animation: pnShine 2.8s ease-in-out 1s infinite; pointer-events: none; }
+.paynow-opt:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 14px 28px rgba(122,184,0,.5); }
+.paynow-opt:active { transform: scale(.98); }
+.paynow-opt:disabled, .paynow-opt:disabled * { animation: none; }
+@keyframes pnIn { from { opacity: 0; transform: translateY(10px) scale(.94); } }
+@keyframes pnGlow { 0%, 100% { box-shadow: 0 10px 22px rgba(122,184,0,.42), 0 0 0 0 rgba(122,184,0,.45); } 50% { box-shadow: 0 12px 26px rgba(122,184,0,.5), 0 0 0 8px rgba(122,184,0,0); } }
+@keyframes pnShine { 0% { left: -40%; } 55%, 100% { left: 130%; } }
+@keyframes pnNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+@keyframes pnWiggle { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-10deg); } 90% { transform: rotate(8deg); } 95% { transform: rotate(-4deg); } }
+.pickday-opt { padding: 8px 12px; } .pickday-opt .pn-ic { width: 32px; height: 32px; font-size: 17px; } .pickday-opt .pn-tx b { font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .paynow-opt, .paynow-opt * { animation: none !important; } }
