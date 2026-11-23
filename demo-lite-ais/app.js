@@ -247,12 +247,24 @@
       tile('tPts', null, th ? 'เพิ่งตรวจสอบ' : 'Balance just checked', 'good');
       const c = addCard(`<h4>${th ? 'AIS Points คงเหลือ' : 'AIS Points balance'}</h4><div class="flexr"><div class="ring"><b>${p.points.toLocaleString()}</b></div><div><b>${esc(p.display[curLang])}</b><br><small>${p.tier} · ${th ? '300 คะแนนหมดอายุ 31 ธ.ค.' : '300 expire 31 Dec'}</small></div></div>`);
       requestAnimationFrame(() => c.querySelector('.ring').style.setProperty('--p', 78));
-    } else if (/(three packages|สามแพ็กเกจ)/i.test(text)) {
-      const c = addCard(`<h4>✈️ ${th ? 'แพ็กเกจโรมมิ่ง' : 'Roaming packages'}</h4><div class="packs">${[[3, '399', '2 GB'], [7, '799', '5 GB'], [15, '1,299', '12 GB']].map(([d, pr, g]) => `<div class="pack" data-d="${d}"><b>${d} ${th ? 'วัน' : 'days'}</b>฿${pr}<br><small>${g}</small></div>`).join('')}</div>`);
-      c.querySelectorAll('.pack').forEach((el) => (el.onclick = () => { el.classList.add('sel'); send(th ? `${el.dataset.d} วัน` : `the ${el.dataset.d} day one`); }));
+    } else if (/(three packages|สามแพ็กเกจ|roaming packages for)/i.test(text)) {
+      const rec = (text.match(/the (\d+)-day pack covers|แนะนำแพ็กเกจ (\d+) วัน/) || []).slice(1).find(Boolean);
+      const trip = (text.match(/your (\d+)-day trip|ทริป (\d+) วัน/) || []).slice(1).find(Boolean);
+      const det = { 3: th ? 'เหมาะกับทริปสั้น · ดาต้าความเร็วสูง 2 GB · เริ่มเมื่อถึงปลายทาง' : 'Short trips · 2 GB high-speed data · starts on arrival', 7: th ? 'ทริป 1 สัปดาห์ · ดาต้าความเร็วสูง 5 GB · โทรรับสายฟรี · เริ่มเมื่อถึงปลายทาง' : 'One-week trips · 5 GB high-speed data · free incoming calls · starts on arrival', 15: th ? 'ทริปยาว · ดาต้าความเร็วสูง 12 GB · โทรรับสายฟรี · เริ่มเมื่อถึงปลายทาง' : 'Long trips · 12 GB high-speed data · free incoming calls · starts on arrival' };
+      const c = addCard(`<h4>✈️ ${th ? 'แพ็กเกจโรมมิ่ง' : 'Roaming packages'}${trip ? ` · ${th ? `ทริป ${trip} วัน` : `${trip}-day trip`}` : ''}</h4><div class="rpk">${[[3, '399', '2 GB'], [7, '799', '5 GB'], [15, '1,299', '12 GB']].map(([d, pr, g]) => `
+        <div class="rpk-row${String(d) === rec ? ' rec' : ''}" data-d="${d}">${String(d) === rec ? `<span class="rpk-badge">⭐ ${th ? `เหมาะกับทริป ${trip} วัน` : `Best for your ${trip}-day trip`}</span>` : ''}
+          <div class="rpk-main"><div class="rpk-days"><b>${d}</b><small>${th ? 'วัน' : 'days'}</small></div><div class="rpk-info"><b>${g}</b><small>${th ? 'ดาต้าความเร็วสูง' : 'high-speed data'}</small></div><div class="rpk-price">฿${pr}</div></div>
+          <div class="rpk-det">${det[d]}</div>
+          <div class="rpk-btns"><button class="rpk-more">${th ? 'รายละเอียด' : 'Details'}</button><button class="rpk-buy">${th ? 'ซื้อ' : 'Buy'}</button></div>
+        </div>`).join('')}</div>`);
+      c.classList.add('packcard');
+      c.querySelectorAll('.rpk-row').forEach((row) => {
+        row.querySelector('.rpk-more').onclick = () => row.classList.toggle('open');
+        row.querySelector('.rpk-buy').onclick = () => { c.querySelectorAll('button').forEach((b) => (b.disabled = true)); row.classList.add('sel'); send(th ? `${row.dataset.d} วัน` : `the ${row.dataset.d} day one`); };
+      });
     } else if (/(activate the|ยืนยันสมัครแพ็กเกจ|redeem .* points\?|ยืนยันแลก)/i.test(text)) {
       chips(th ? ['ใช่ ยืนยันค่ะ', 'ไม่เป็นไรค่ะ'] : ['Yes please', 'No thanks']);
-    } else if (/(roaming package for .* is active|สมัครแพ็กเกจโรมมิ่ง.*แล้ว|is redeemed|แลก.*แล้ว)/i.test(text)) {
+    } else if (/(roaming package for .* is active|สมัครแพ็กเกจโรมมิ่ง.*แล้ว|is redeemed|แลก.*แล้ว)/i.test(text) && !/McDonald/i.test(text)) {
       signal('🎉 Transaction done'); ari('happy', sayL('done'), 2600);
       if (/roaming|โรมมิ่ง/i.test(text)) {
         const mm = text.match(/(\d+)-day roaming package for ([^.]+?) is|แพ็กเกจโรมมิ่ง (\d+) วันสำหรับ(\S+?)แล้ว/);
@@ -285,6 +297,8 @@
     }
     if (agent === 'Lite_Bill_Agent' && /(right here in the chat|ในแชทนี้ได้เลย)/i.test(text)) payCard();
     if (agent === 'Lite_Bill_Agent' && /(to brighten your day|ให้คุณลูกค้าได้ผ่อนคลาย)/i.test(text)) treatCard('comfort');
+    if (/(you may also have an airport reward|คุณอาจมีสิทธิ์รับรางวัลที่สนามบิน)/i.test(text)) setTimeout(airportCard, 300);
+    if (/(redeemed for a burger|redeemed for a pie|แลก 369 คะแนนเป็นเบอร์เกอร์|แลก 129 คะแนนเป็นพาย)/i.test(text)) mcdRedeemed(/burger|เบอร์เกอร์/i.test(text), text);
     if (agent === 'Lite_Bill_Agent' && /(average bill over the last 6 months|ค่าบริการเฉลี่ย 6 เดือน)/i.test(text)) insightCard();
     if (agent === 'Lite_Bill_Agent' && /(coupon for your airport coffee|คูปองกาแฟที่สนามบิน)/i.test(text)) setTimeout(() => treatCard('coffee'), 900);
     if (/(collect 200 more|สะสมเพิ่มอีก 200)/i.test(text)) goalCard();
@@ -325,6 +339,43 @@
     c.querySelector('.paynow-opt').onclick = () => { c.querySelectorAll('button').forEach((x) => (x.disabled = true)); send(th ? 'ขอชำระตอนนี้เลยค่ะ' : 'I want to pay now'); };
     c.querySelectorAll('.day').forEach((b) => (b.onclick = () => choose(days[+b.dataset.i], +b.dataset.i, b)));
     c.querySelector('.pick button').onclick = () => { const v = c.querySelector('input').value; if (!v) return; const d = new Date(v + 'T12:00:00'); const diff = Math.round((d - new Date(now.toDateString())) / 864e5); choose(d, diff <= 1 ? Math.max(diff, 0) : 9, null); };
+  }
+
+  // Airport reward at McDonald's, Suvarnabhumi: free e-coupon for Gold/Platinum, redeem with points for others.
+  const MCD = { brand: "McDonald's", icon: '🍔', color: '#da291c', accent: '#ffc72c' };
+  function mcdTicket(head, tierLabel, benefit, extra) {
+    const code = 'MCD-' + String(Date.now()).slice(-6);
+    const qr = Array.from({ length: 81 }, (_, i) => `<i class="${(i * 5 + (i % 9) * 7 + 3) % 4 < 2 ? 'on' : ''}"></i>`).join('');
+    const th = curLang === 'th';
+    return `<div class="treat" style="--brand:${MCD.color};--brand-2:#fff6d6">
+      <div class="tr-top"><span class="tr-kicker">${head}</span><span class="tr-tier">${tierLabel}</span></div>
+      <div class="tr-body"><div class="tr-logo">${MCD.icon}</div><div class="tr-main"><b class="tr-brand">${MCD.brand}</b><div class="tr-benefit">${benefit}</div>
+        <div class="tr-where">✈️ <span>${th ? 'สุวรรณภูมิ' : 'Suvarnabhumi'}</span></div></div></div>
+      ${extra || `<div class="tr-cut"><i></i></div><div class="tr-foot"><div class="tr-qr">${qr}</div><div class="tr-meta"><small>${th ? 'รหัสคูปอง' : 'Coupon code'}</small><b>${code}</b><small>${th ? 'ใช้ได้ถึง 31 ม.ค. 2570 · แสดงที่เคาน์เตอร์' : 'Valid until 31 Jan 2027 · show at the counter'}</small></div><span class="tr-free">${th ? 'ฟรี' : 'FREE'}</span></div>`}
+    </div>`;
+  }
+  function airportCard() {
+    const th = curLang === 'th', pr = profile(), a = pr.airport; if (!a) return;
+    if (a.mode === 'free') {
+      const c = addCard(mcdTicket(th ? '🛫 รางวัลที่สนามบินของคุณ' : '🛫 Your airport reward', `AIS Serenade · ${a.tier}`, esc(th ? a.item.th : a.item.en)));
+      c.classList.add('treatcard'); c.style.cssText = 'padding:0;border:0;background:transparent;box-shadow:none';
+      ari('happy', th ? 'มีของฟรีที่สนามบินด้วยค่ะ 🍔' : 'Free food at the airport 🍔', 2600);
+      return;
+    }
+    const opts = `<div class="mcd-opts">
+        <button class="mcd-opt" data-k="burger"><span class="mo-ic">🍔🥤</span><span class="mo-tx"><b>${th ? 'เบอร์เกอร์ + เครื่องดื่ม 32 ออนซ์' : 'Burger + 32 oz drink'}</b><small>${th ? 'ฟิเล-โอ-ฟิช แมคชิคเก้น หรือซามูไร' : 'Filet-O-Fish, McChicken or Samurai'}</small></span><span class="mo-pts">369 ⭐</span></button>
+        <button class="mcd-opt" data-k="pie"><span class="mo-ic">🥧</span><span class="mo-tx"><b>${th ? 'พาย 1 ชิ้น' : '1 pie'}</b><small>${th ? 'สับปะรดหรือข้าวโพด' : 'Pineapple or corn'}</small></span><span class="mo-pts">129 ⭐</span></button>
+        <div class="mcd-bal">${th ? 'คะแนนของคุณ' : 'Your points'}: <b>${pr.points.toLocaleString()} ⭐</b></div></div>`;
+    const c = addCard(mcdTicket(th ? '🛫 รางวัลที่สนามบิน · แลกด้วยคะแนน' : '🛫 Airport reward · redeem with points', 'AIS Points', esc(th ? 'เลือกแลกได้เลยค่ะ' : 'Choose what to redeem'), opts));
+    c.classList.add('treatcard'); c.style.cssText = 'padding:0;border:0;background:transparent;box-shadow:none';
+    c.querySelectorAll('.mcd-opt').forEach((b) => (b.onclick = () => { c.querySelectorAll('.mcd-opt').forEach((x) => (x.disabled = true)); b.classList.add('sel'); send(b.dataset.k === 'burger' ? (th ? 'แลกเบอร์เกอร์พร้อมเครื่องดื่มค่ะ' : 'Redeem the burger and drink') : (th ? 'แลกพายค่ะ' : 'Redeem the pie')); }));
+  }
+  function mcdRedeemed(burger, text) {
+    const th = curLang === 'th', pr = profile();
+    const c = addCard(mcdTicket(th ? '✅ แลกคะแนนเรียบร้อย' : '✅ Points redeemed', burger ? '−369 ⭐' : '−129 ⭐', burger ? (th ? 'เบอร์เกอร์ + เครื่องดื่ม 32 ออนซ์' : 'Burger + 32 oz drink') : (th ? 'พาย 1 ชิ้น' : '1 pie')));
+    c.classList.add('treatcard'); c.style.cssText = 'padding:0;border:0;background:transparent;box-shadow:none';
+    const m = text.match(/(\d[\d,]*) points left|คงเหลือ (\d[\d,]*) คะแนน/); if (m) tile('tPts', m[1] || m[2], th ? 'แลกรางวัลที่สนามบินแล้ว' : 'Airport reward redeemed', 'good');
+    ari('happy', th ? 'แลกเรียบร้อยค่ะ 🍔' : 'Enjoy your meal 🍔', 2600);
   }
 
   // Bill insight: last 6 months as bars, the average line, this month highlighted, why it went up, and the roaming offer.
@@ -556,10 +607,11 @@
     [['tBill', null, th0 ? `เลยกำหนด · ครบกำหนด ${p.due}` : `Overdue · due ${p.due}`, 'bad'], ['tPts', null, p.tier, ''], ['tRoam', th0 ? 'ยังไม่มีแพ็กเกจ' : 'No package', th0 ? 'พร้อมเดินทาง' : 'Ready to travel', ''], ['tSms', th0 ? 'ยังไม่ส่ง' : 'Not sent', th0 ? 'SMS ตามภาษาของการสนทนา' : 'SMS in the chat language', '']].forEach(([id, b, em, cls]) => { const el = $(id); if (b != null) el.querySelector('b').textContent = b; el.querySelector('em').textContent = em; el.classList.remove('good', 'bad', 'flash'); if (cls) el.classList.add(cls); });
     turnEl = null;
     $('chat').hidden = true; $('phone').hidden = true; $('callView').hidden = true; $('smsView').hidden = true; $('stage').classList.remove('with-phone');
-    if (entry === 'reminder_link' && !fromSms) {
+    if ((entry === 'reminder_link' || entry === 'travel_link') && !fromSms) {
       $('phone').hidden = false; $('smsView').hidden = false; $('stage').classList.add('with-phone');
       $('smsText').textContent = curLang === 'th' ? `AIS: ค่าอินเทอร์เน็ตบ้าน 3BB Fibre เบอร์ •••• ${p.line} ยอด ฿${p.amount} เลยกำหนดชำระ แตะลิงก์เพื่อคุยกับผู้ช่วย AIS` : `AIS: Your 3BB Fibre bill for •••• ${p.line} (฿${p.amount}) is overdue. Tap the secure link to sort it out with the AIS assistant.`;
-      $('smsLinkText').textContent = 'ais.th/pay/secure-link';
+      if (entry === 'travel_link') $('smsText').textContent = curLang === 'th' ? 'AIS: กำลังจะเดินทางไปต่างประเทศใช่ไหม? แชทกับ AIS เพื่อหาแพ็กเกจโรมมิ่งสำหรับทริปของคุณ และดูสิทธิ์อาหารและเครื่องดื่มฟรีที่สนามบิน' : 'AIS: Traveling abroad? Chat with AIS to find a roaming package for your trip, and discover free airport food and drink offers:';
+      $('smsLinkText').textContent = entry === 'travel_link' ? 'ais.th/travel' : 'ais.th/pay/secure-link';
       $('smsNote').textContent = curLang === 'th' ? 'แตะลิงก์เพื่อเปิดแชท AIS' : 'Tap the link to open the AIS chat';
       setConn('idle', 'Waiting for the customer to tap the link');
       await new Promise((r) => { $('smsLink').onclick = r; if (autoOn) setTimeout(r, 1800); });
