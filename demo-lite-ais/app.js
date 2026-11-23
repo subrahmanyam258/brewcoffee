@@ -33,7 +33,18 @@
   let curLang = 'th', curAgent = null, used = new Set(), turns = 0, faqs = 0, sentAt = 0, lastBotAt = 0, ended = false, sdkReady = null, autoOn = false;
 
   // ── controls ─────────────────────────────────────────────────────────────
-  SCEN.forEach((s, i) => { const o = document.createElement('option'); o.value = i; o.textContent = i === 0 ? s.title.en : `${i}. ${s.title.en}`; $('ctlScenario').appendChild(o); });
+  // Two groups: chat journeys, and voice calls (dial 2015009; run here as a chat dry run of the call).
+  (() => {
+    const gChat = document.createElement('optgroup'); gChat.label = '💬 Chat';
+    const gVoice = document.createElement('optgroup'); gVoice.label = '📞 Voice calls · dial 2015009 (chat dry run here)';
+    let nChat = 0, nVoice = 0;
+    SCEN.forEach((s, i) => {
+      const o = document.createElement('option'); o.value = i;
+      o.textContent = s.voice ? `V${++nVoice}. ${s.title.en.replace(/^📞 Voice · /, '')}` : (i === 0 ? s.title.en : `${++nChat}. ${s.title.en}`);
+      (s.voice ? gVoice : gChat).appendChild(o);
+    });
+    $('ctlScenario').appendChild(gChat); $('ctlScenario').appendChild(gVoice);
+  })();
   $('ctlScenario').onchange = (e) => { st.scenario = SCEN[+e.target.value]; st.lang = st.scenario.lang; st.profile = st.scenario.profile; $('ctlProfile').value = st.profile; st.entryOverride = null; syncSeg(); renderPanel(); };
   Object.entries(PROFILES).forEach(([k, p]) => { const o = document.createElement('option'); o.value = k; o.textContent = p.label; $('ctlProfile').appendChild(o); });
   $('ctlProfile').value = st.profile;
@@ -87,7 +98,8 @@
     s.lines.forEach((l) => {
       const line = typeof l === 'string' ? { text: l } : l;
       const b = document.createElement('button'); b.dataset.text = line.text;
-      b.innerHTML = `<span class="tx">${esc(line.text)}</span>${line.note ? `<span class="nt">${esc(line.note)}</span>` : ''}`;
+      if (line.barge) b.classList.add('barge');
+      b.innerHTML = `${line.barge ? '<span class="bg">🎙 Barge in</span>' : ''}<span class="tx">${esc(line.text)}</span>${line.note ? `<span class="nt">${esc(line.note)}</span>` : ''}`;
       b.onclick = () => { b.classList.add('done'); send(line.text); markNext(); };
       $('lines').appendChild(b);
     });
@@ -619,7 +631,11 @@
       $('phone').hidden = true; $('stage').classList.remove('with-phone');
     } else if (entry === 'inbound') {
       $('phone').hidden = false; $('callView').hidden = false; $('stage').classList.add('with-phone');
-      $('callWho').textContent = 'AIS Contact Centre'; $('callSub').textContent = (curLang === 'th' ? 'หมายเลขที่ลงทะเบียน · เชื่อมต่อแล้ว' : 'Registered number · connected');
+      $('callWho').textContent = 'AIS Contact Centre'; $('callSub').textContent = st.scenario.voice ? (curLang === 'th' ? 'โทรเข้า 2015009 · เชื่อมต่อแล้ว' : 'Inbound to 2015009 · connected') : (curLang === 'th' ? 'หมายเลขที่ลงทะเบียน · เชื่อมต่อแล้ว' : 'Registered number · connected');
+    } else if (entry === 'outbound_call') {
+      $('phone').hidden = false; $('callView').hidden = false; $('stage').classList.add('with-phone');
+      $('callWho').textContent = curLang === 'th' ? 'AIS 3BB Fibre โทรหาคุณ' : 'AIS 3BB Fibre is calling';
+      $('callSub').textContent = curLang === 'th' ? 'สายโทรออกจาก 2015009 · เชื่อมต่อแล้ว' : 'Outbound from 2015009 · connected';
     }
     $('chat').hidden = false;
     ari('wave', sayL('hi'), 2600);
@@ -631,7 +647,7 @@
     setConn('idle', 'Connecting…'); $('typing').hidden = false; $('typingWho').textContent = '';
     let AgentSDK; try { AgentSDK = await loadSdk(); } catch (e) { return fail(e, token); }
     if (token !== runToken) return;
-    const attrs = { web_language: curLang, web_entry: entry === 'inbound' ? 'visit' : entry, web_authenticated: true, call_direction: entry === 'inbound' ? 'inbound' : 'outbound', ...p.attrs };
+    const attrs = { web_language: curLang, web_entry: (entry === 'inbound' || entry === 'outbound_call') ? 'visit' : entry, web_authenticated: entry !== 'outbound_call', call_direction: entry === 'inbound' ? 'inbound' : 'outbound', ...p.attrs };
     const opts = { endpoint: cfg.endpoint, projectId: cfg.projectId, apiKey: cfg.apiKey, userContext: { userId: `demo-lite-${st.profile}-${Date.now()}`, customAttributes: attrs } };
     if (cfg.channelId) opts.channelId = cfg.channelId;
     try {

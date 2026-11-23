@@ -683,3 +683,8 @@ body.bar-collapsed { --barh: 0px; }
   .stage.with-phone .mascot { right: calc(var(--edge) + 640px); }
 }
 @media (max-width: 760px) { .mascot { display: none; } }
+/* Voice scripts: barge-in cue */
+#lines button.barge { border-left: 4px solid #8b5cf6; }
+#lines button > span { grid-column: 2; }
+#lines button.barge::before { grid-row: span 3; }
+#lines button .bg { justify-self: start; font: 700 10.5px Kanit, sans-serif; color: #fff; background: #8b5cf6; border-radius: 99px; padding: 1px 8px; letter-spacing: .02em; }
