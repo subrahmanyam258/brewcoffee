@@ -285,6 +285,10 @@
     }
     if (agent === 'Lite_Bill_Agent' && /(right here in the chat|ในแชทนี้ได้เลย)/i.test(text)) payCard();
     if (agent === 'Lite_Bill_Agent' && /(to brighten your day|ให้คุณลูกค้าได้ผ่อนคลาย)/i.test(text)) treatCard('comfort');
+    if (agent === 'Lite_Bill_Agent' && /(average bill over the last 6 months|ค่าบริการเฉลี่ย 6 เดือน)/i.test(text)) insightCard();
+    if (agent === 'Lite_Bill_Agent' && /(coupon for your airport coffee|คูปองกาแฟที่สนามบิน)/i.test(text)) setTimeout(() => treatCard('coffee'), 900);
+    if (/(collect 200 more|สะสมเพิ่มอีก 200)/i.test(text)) goalCard();
+    if (/(extra 1 gb is added|เพิ่มดาต้า 1 gb ในแพ็กเกจรายเดือนแล้ว)/i.test(text)) upgradeCard();
     if (agent === 'Lite_Bill_Agent' && /(as a thank-you, please enjoy|เพื่อเป็นการขอบคุณ)/i.test(text)) treatCard('thanks');
     if (agent === 'Lite_Bill_Agent' && /(paid by card and|ด้วยบัตรเรียบร้อย)/i.test(text)) {
       signal(th ? '💳 ชำระด้วยบัตรแล้ว' : '💳 Paid by card');
@@ -309,24 +313,82 @@
     };
     const cell = (d, i) => { const lab = i === 0 ? (th ? 'วันนี้' : 'Today') : i === 1 ? (th ? 'พรุ่งนี้' : 'Tomorrow') : (th ? dTh[d.getDay()] : dEn[d.getDay()].slice(0, 3)); return `<button class="day${i === 1 ? ' rec' : ''}" data-i="${i}"><small>${lab}</small><b>${d.getDate()}</b><small>${th ? mTh[d.getMonth()] : mEn[d.getMonth()]}</small></button>`; };
     document.querySelectorAll('.card.datecard').forEach((x) => x.remove());
-    const c = addCard(`<h4>📅 ${th ? 'เลือกวันที่สะดวกชำระ' : 'When can you pay?'}</h4><button class="paynow-opt"><span class="pn-ic">💳</span><span class="pn-tx"><b>${th ? 'ชำระตอนนี้เลย' : 'Pay now'}</b><small>${th ? 'บัตรเครดิต/เดบิต · ปลอดภัย ไม่มีค่าธรรมเนียม' : 'Credit or debit card · secure, no fee'}</small></span><span class="pn-go">›</span></button><div class="or"><span>${th ? 'หรือเลือกวันที่จะชำระ' : 'or pick a day to pay'}</span></div><div class="dates">${days.map(cell).join('')}</div><div class="pick"><input type="date" min="${now.toISOString().slice(0, 10)}"><button>${th ? 'เลือก' : 'Choose'}</button></div>`);
+    const c = addCard(`<h4>📅 ${th ? 'เลือกวันที่สะดวกชำระ' : 'When can you pay?'}</h4><button class="paynow-opt"><span class="pn-ic">💳</span><span class="pn-tx"><b>${th ? 'ชำระตอนนี้เลย' : 'Pay now'}</b><small>${th ? 'บัตรเครดิต/เดบิต · ปลอดภัย ไม่มีค่าธรรมเนียม' : 'Credit or debit card · secure, no fee'}</small></span><span class="pn-go">›</span></button><button class="pickday-opt" aria-expanded="false"><span class="pn-ic">📅</span><span class="pn-tx"><b>${th ? 'เลือกวันที่จะชำระ' : 'Pick a day to pay'}</b><small>${th ? 'นัดวันชำระที่สะดวก' : 'Choose a date that suits you'}</small></span><span class="pn-go">⌄</span></button><div class="dc-more"><div class="dc-inner"><div class="dates">${days.map(cell).join('')}</div><div class="pick"><input type="date" min="${now.toISOString().slice(0, 10)}"><button>${th ? 'เลือก' : 'Choose'}</button></div></div></div>`);
     const choose = (d, i, btn) => {
       c.querySelectorAll('.day').forEach((x) => x.classList.remove('sel')); if (btn) btn.classList.add('sel');
       pickedDate = { d: d.getDate(), mon: th ? mTh[d.getMonth()] : mEn[d.getMonth()], label: `${th ? dTh[d.getDay()] : dEn[d.getDay()]} ${d.getDate()} ${th ? mTh[d.getMonth()] : mEn[d.getMonth()]} ${d.getFullYear()}` };
       send(say(d, i));
     };
     c.classList.add('datecard');
+    const more = c.querySelector('.pickday-opt');
+    more.onclick = () => { const open = !c.classList.contains('open'); c.classList.toggle('open', open); more.setAttribute('aria-expanded', String(open)); if (open) setTimeout(scrollDown, 320); };
     c.querySelector('.paynow-opt').onclick = () => { c.querySelectorAll('button').forEach((x) => (x.disabled = true)); send(th ? 'ขอชำระตอนนี้เลยค่ะ' : 'I want to pay now'); };
     c.querySelectorAll('.day').forEach((b) => (b.onclick = () => choose(days[+b.dataset.i], +b.dataset.i, b)));
     c.querySelector('.pick button').onclick = () => { const v = c.querySelector('input').value; if (!v) return; const d = new Date(v + 'T12:00:00'); const diff = Math.round((d - new Date(now.toDateString())) / 864e5); choose(d, diff <= 1 ? Math.max(diff, 0) : 9, null); };
   }
 
+  // Bill insight: last 6 months as bars, the average line, this month highlighted, why it went up, and the roaming offer.
+  function insightCard() {
+    const th = curLang === 'th', pr = profile(), hist = pr.history || [];
+    const cur = parseFloat(String(pr.amount).replace(/,/g, '')), all = [...hist, cur], max = Math.max(...all) * 1.12;
+    const avg = Math.round(hist.reduce((a, b) => a + b, 0) / (hist.length || 1));
+    const mEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], mTh = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const now = new Date(), lab = (k) => { const d = new Date(now.getFullYear(), now.getMonth() - k, 1); return (th ? mTh : mEn)[d.getMonth()]; };
+    const bars = all.map((v, i) => { const k = all.length - 1 - i, last = i === all.length - 1;
+      return `<div class="ib-col${last ? ' now' : ''}"><span class="ib-val">${last ? '฿' + pr.amount : v.toLocaleString()}</span><i style="--h:${(v / max * 100).toFixed(1)}%;--d:${i * 70}ms"></i><small>${lab(k)}</small></div>`; }).join('');
+    const diff = Math.round(cur - avg);
+    const c = addCard(`<div class="ib">
+        <div class="ib-head"><h4>📊 ${th ? 'ค่าบริการ 6 เดือนล่าสุด' : 'Your bill, last 6 months'}</h4><span class="ib-up">▲ ฿${diff.toLocaleString()} ${th ? 'จากค่าเฉลี่ย' : 'vs average'}</span></div>
+        <div class="ib-chart" style="--avg:${(avg / max * 100).toFixed(1)}%">${bars}<div class="ib-avg"><span>${th ? 'เฉลี่ย' : 'avg'} ฿${avg.toLocaleString()}</span></div></div>
+        <div class="ib-why"><span>🌐 ${th ? 'ใช้อินเทอร์เน็ตบ้านมากขึ้น' : 'More home-internet use'}</span><span>✈️ ${th ? 'ค่าโรมมิ่ง ญี่ปุ่น' : 'Roaming in Japan'}</span></div>
+        <div class="ib-offer"><div class="ib-o-ic">✈️</div><div class="ib-o-tx"><b>${th ? 'โรมมิ่งญี่ปุ่น 7 วัน' : 'Japan roaming · 7 days'}</b><small>5 GB · ${th ? 'ไม่ต้องกังวลค่าใช้จ่ายเกิน' : 'no bill shock on your next trip'}</small></div><b class="ib-o-pr">฿799</b></div>
+        <div class="ib-btns"><button class="ib-yes">${th ? 'เพิ่มเลย' : 'Add it'}</button><button class="ib-no">${th ? 'ไว้ก่อน' : 'Not now'}</button></div>
+      </div>`);
+    c.classList.add('insightcard');
+    const done = () => c.querySelectorAll('.ib-btns button').forEach((b) => (b.disabled = true));
+    c.querySelector('.ib-yes').onclick = () => { done(); send(th ? 'ใช่ เพิ่มเลยค่ะ' : 'Yes, add it'); };
+    c.querySelector('.ib-no').onclick = () => { done(); send(th ? 'ไม่เป็นไรค่ะ' : 'Not now'); };
+    requestAnimationFrame(() => c.classList.add('on'));
+    signal(th ? '📊 อธิบายค่าบริการ + เสนอโรมมิ่ง' : '📊 Bill insight + roaming offer');
+  }
+  // Points goal: progress to the next reward (200 points away) and the extra 1 GB offer that earns them.
+  function goalCard() {
+    const th = curLang === 'th', pr = profile(), pts = pr.points, goal = pts + 200, g = pr.goal || { en: 'a reward', th: 'ของรางวัล' };
+    const pct = Math.round(pts / goal * 100);
+    const c = addCard(`<div class="pg">
+        <div class="pg-head"><span class="pg-ic">⭐</span><div><small>${th ? 'คะแนน AIS Points' : 'AIS Points'}</small><b>${pts.toLocaleString()}</b></div>
+          <div class="pg-goal"><small>${th ? 'รางวัลถัดไปที่' : 'Next reward at'} ${goal.toLocaleString()}</small><b>🎁 ${esc(th ? g.th : g.en)}</b></div></div>
+        <div class="pg-bar"><i style="--p:${pct}%"></i><span class="pg-need">${th ? 'อีก 200 คะแนน' : '200 to go'}</span></div>
+        <div class="pg-offer"><div class="pg-o-ic">📶</div><div class="pg-o-tx"><b>${th ? '+1 GB ต่อเดือน' : '+1 GB every month'}</b><small>${th ? 'รับ +200 คะแนน ทันที' : 'earns the 200 points now'}</small></div><b class="pg-o-pr">${th ? '฿59/เดือน' : '฿59/mo'}</b></div>
+        <div class="ib-btns"><button class="ib-yes">${th ? 'เพิ่มเลย' : 'Add it'}</button><button class="ib-no">${th ? 'ไว้ก่อน' : 'Not now'}</button></div>
+      </div>`);
+    c.classList.add('goalcard');
+    const done = () => c.querySelectorAll('.ib-btns button').forEach((b) => (b.disabled = true));
+    c.querySelector('.ib-yes').onclick = () => { done(); send(th ? 'ใช่ เพิ่มเลยค่ะ' : 'Yes, add it'); };
+    c.querySelector('.ib-no').onclick = () => { done(); send(th ? 'ไม่เป็นไรค่ะ' : 'Not now'); };
+    requestAnimationFrame(() => c.classList.add('on'));
+    tile('tPts', null, th ? 'อีก 200 คะแนนได้รางวัล' : '200 to the next reward', 'good');
+  }
+  // Extra 1 GB added: the bar fills to the goal and the reward unlocks.
+  function upgradeCard() {
+    const th = curLang === 'th', pr = profile(), pts = pr.points, g = pr.goal || { en: 'a reward', th: 'ของรางวัล' };
+    const c = addCard(`<div class="pu">
+        <div class="pu-row"><span class="pu-ic">📶</span><div><b>${th ? 'อัปเกรดแพ็กเกจแล้ว' : 'Plan upgraded'}</b><small>${th ? '+1 GB ต่อเดือน · ฿59/เดือน' : '+1 GB every month · ฿59/mo'}</small></div><span class="pu-plus">+200 ⭐</span></div>
+        <div class="pg-bar full"><i style="--p:${Math.round(pts / (pts + 200) * 100)}%"></i></div>
+        <div class="pu-unlock">🎁 ${th ? 'ปลดล็อกแล้ว:' : 'Unlocked:'} <b>${esc(th ? g.th : g.en)}</b></div>
+      </div>`);
+    c.classList.add('upgradecard');
+    setTimeout(() => { const i = c.querySelector('.pg-bar i'); if (i) i.style.setProperty('--p', '100%'); }, 400);
+    tile('tPts', (pts + 200).toLocaleString(), th ? 'ได้รับ +200 คะแนน' : '+200 bonus points', 'good');
+    ari('happy', th ? 'ปลดล็อกรางวัลแล้วค่ะ 🎁' : 'Reward unlocked 🎁', 2600);
+  }
+
   // Free airport food/drink privilege as an e-coupon (web only). 'comfort' after "I can't pay", 'thanks' after a card payment.
   function treatCard(kind) {
-    const th = curLang === 'th', pr = profile(), v = pr.privilege;
+    const th = curLang === 'th', pr = profile(), v = kind === 'coffee' ? pr.coffee : pr.privilege;
     if (!v) return;
     const code = (v.brand.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()) + '-' + String(Date.now()).slice(-6);
-    const head = kind === 'thanks' ? (th ? '🎉 ขอบคุณที่ชำระค่าบริการ' : '🎉 Thanks for paying') : (th ? '💚 ของขวัญเล็กๆ จากอารีย์' : '💚 A little treat, on us');
+    const head = kind === 'coffee' ? (th ? '☕ กาแฟที่สนามบิน ฟรีจากอารีย์' : '☕ Your airport coffee, on us') : kind === 'thanks' ? (th ? '🎉 ขอบคุณที่ชำระค่าบริการ' : '🎉 Thanks for paying') : (th ? '💚 ของขวัญเล็กๆ จากอารีย์' : '💚 A little treat, on us');
     const qr = Array.from({ length: 81 }, (_, i) => `<i class="${(i * 5 + (i % 9) * 7 + code.length) % 4 < 2 ? 'on' : ''}"></i>`).join('');
     const c = addCard(`<div class="treat" style="--brand:${v.color};--brand-2:${v.accent}">
         <div class="tr-top"><span class="tr-kicker">${head}</span><span class="tr-tier">AIS Serenade · ${esc(v.tier)}</span></div>

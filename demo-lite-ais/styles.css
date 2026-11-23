@@ -563,3 +563,62 @@ body.bar-collapsed { --barh: 0px; }
 .fltcard .flt-done .ok { width: 26px; height: 26px; font-size: 14px; }
 .fltcard .flt-done b { font-size: 13px; } .fltcard .flt-done small { font-size: 11px; white-space: nowrap; }
 .fltcard .flt-panel.landed .flt-done { opacity: 1; transform: translate(-50%, 0); }
+
+/* web: bill insight card (6-month chart, average, reasons, roaming offer) */
+.card.insightcard, .card.goalcard, .card.upgradecard { flex-shrink: 0; width: 100%; align-self: stretch; }
+.ib-head, .pg-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ib-head h4 { margin: 0; }
+.ib-up { padding: 2px 9px; border-radius: 99px; background: #fff1e6; color: #c2410c; font: 600 12px Kanit; white-space: nowrap; }
+.ib-chart { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 132px; margin: 12px 0 4px; padding-top: 16px; }
+.ib-col { position: relative; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; height: 100%; }
+.ib-col i { align-self: end; width: 70%; max-width: 30px; height: 0; border-radius: 7px 7px 3px 3px; background: linear-gradient(180deg, #7fb9c0, #3e8f98); transition: height .7s cubic-bezier(.2,1.2,.4,1) var(--d); }
+.insightcard.on .ib-col i { height: var(--h); }
+.ib-col.now i { background: linear-gradient(180deg, #fdba74, #ea580c); box-shadow: 0 6px 14px rgba(234,88,12,.3); }
+.ib-col small { font-size: 11px; color: var(--mut); margin-top: 4px; }
+.ib-val { font: 600 10.5px Kanit; color: var(--mut); opacity: 0; transition: opacity .3s .6s; white-space: nowrap; }
+.insightcard.on .ib-val { opacity: 1; } .ib-col.now .ib-val { color: #c2410c; font-size: 11.5px; }
+.ib-avg { position: absolute; left: 0; right: 0; bottom: calc(var(--avg) * .636 + 18px); border-top: 2px dashed var(--teal-2); opacity: 0; transition: opacity .4s .8s; pointer-events: none; }
+.insightcard.on .ib-avg { opacity: 1; }
+.ib-avg span { position: absolute; left: 0; top: -19px; padding: 1px 7px; border-radius: 99px; background: var(--teal-2); color: #fff; font: 600 10.5px Kanit; }
+.ib-why { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px; }
+.ib-why span { padding: 3px 10px; border-radius: 99px; background: var(--me); color: var(--teal); font-size: 12.5px; }
+.ib-offer, .pg-offer { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: linear-gradient(120deg, #eef2ff, #fff); border: 1px solid #c7d2fe; }
+.ib-o-ic, .pg-o-ic { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; font-size: 20px; background: #fff; box-shadow: 0 4px 10px rgba(67,56,202,.15); }
+.ib-o-tx, .pg-o-tx { flex: 1; display: flex; flex-direction: column; } .ib-o-tx b, .pg-o-tx b { font: 600 14px Kanit; color: #312e81; } .ib-o-tx small, .pg-o-tx small { color: var(--mut); font-size: 12px; }
+.ib-o-pr, .pg-o-pr { font: 700 17px Kanit; color: #4338ca; }
+.ib-btns { display: flex; gap: 8px; margin-top: 10px; }
+.ib-btns button { flex: 1; border: 0; border-radius: 12px; padding: 9px; font: 600 14px Kanit; cursor: pointer; transition: transform .15s; }
+.ib-btns button:hover { transform: translateY(-1px); } .ib-btns button:disabled { opacity: .5; cursor: default; transform: none; }
+.ib-yes { background: var(--green); color: #fff; box-shadow: 0 6px 14px rgba(122,184,0,.3); } .ib-no { background: #eef3f1; color: var(--teal); }
+/* points goal and plan upgrade */
+.pg-head { margin-bottom: 10px; }
+.pg-head > div:not(.pg-goal) { display: flex; flex-direction: column; margin-right: auto; } .pg-head small { font-size: 11.5px; color: var(--mut); }
+.pg-head b { font: 700 22px Kanit; color: var(--teal); line-height: 1.1; }
+.pg-ic { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 22px; background: #fef9c3; }
+.pg-goal { display: flex; flex-direction: column; align-items: flex-end; text-align: right; } .pg-goal b { font: 600 13.5px Kanit; color: #a16207; }
+.pg-bar { position: relative; height: 12px; border-radius: 99px; background: #f1f5f4; overflow: hidden; margin-bottom: 10px; }
+.pg-bar i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 99px; background: linear-gradient(90deg, #facc15, #eab308); transition: width .9s cubic-bezier(.2,1.1,.4,1); }
+.goalcard.on .pg-bar i, .upgradecard .pg-bar i { width: var(--p); }
+.pg-need { position: absolute; right: 8px; top: -1px; font: 600 10px Kanit; color: #854d0e; line-height: 14px; }
+.pu { position: relative; }
+.pu-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; } .pu-row > div { flex: 1; display: flex; flex-direction: column; }
+.pu-row b { font: 600 15px Kanit; color: var(--teal); } .pu-row small { color: var(--mut); font-size: 12px; }
+.pu-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: var(--me); }
+.pu-plus { padding: 3px 10px; border-radius: 99px; background: #fef9c3; color: #854d0e; font: 700 13px Kanit; animation: pop .5s .4s cubic-bezier(.2,1.6,.4,1) both; }
+.pu-unlock { padding: 8px 12px; border-radius: 12px; background: linear-gradient(120deg, #fef3c7, #fff); color: #92400e; font-size: 13.5px; animation: rise .5s 1s both; } .pu-unlock b { color: #78350f; }
+.upgradecard .pg-bar i { transition-duration: 1.2s; }
+
+/* date card: Pay now + "Pick a day to pay" that expands the dates */
+.pickday-opt { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; text-align: left;
+  background: #fff; color: var(--teal); transition: border-color .15s, background .15s, transform .15s; }
+.pickday-opt:hover { border-color: var(--green); transform: translateY(-1px); }
+.pickday-opt .pn-ic { font-size: 20px; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--me); }
+.pickday-opt .pn-tx { flex: 1; display: flex; flex-direction: column; } .pickday-opt .pn-tx b { font: 600 15px Kanit; } .pickday-opt .pn-tx small { color: var(--mut); font-size: 12px; }
+.pickday-opt .pn-go { font: 600 20px Kanit; color: var(--teal-2); transition: transform .3s ease; }
+.datecard.open .pickday-opt { border-color: var(--green); background: var(--me); }
+.datecard.open .pickday-opt .pn-go { transform: rotate(180deg); }
+.pickday-opt:disabled { opacity: .6; cursor: default; transform: none; }
+.dc-more { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .35s ease; }
+.dc-inner { overflow: hidden; min-height: 0; }
+.datecard.open .dc-more { grid-template-rows: 1fr; }
+.datecard.open .dc-inner { padding-top: 10px; }
