@@ -243,12 +243,14 @@
       rc.style.padding = '0'; rc.style.border = '0'; rc.style.background = 'transparent'; rc.style.boxShadow = 'none';
     }
     if (agent === 'Lite_Bill_Agent' && /(right here in the chat|ในแชทนี้ได้เลย)/i.test(text)) payCard();
+    if (agent === 'Lite_Bill_Agent' && /(to brighten your day|ให้คุณลูกค้าได้ผ่อนคลาย)/i.test(text)) treatCard('comfort');
+    if (agent === 'Lite_Bill_Agent' && /(as a thank-you, please enjoy|เพื่อเป็นการขอบคุณ)/i.test(text)) treatCard('thanks');
     if (agent === 'Lite_Bill_Agent' && /(paid by card and|ด้วยบัตรเรียบร้อย)/i.test(text)) {
       signal(th ? '💳 ชำระด้วยบัตรแล้ว' : '💳 Paid by card');
       ari('happy', th ? 'ชำระเรียบร้อยค่ะ ✓' : 'Paid in full ✓', 2600);
       tile('tBill', th ? 'ชำระแล้ว' : 'Paid', th ? 'ชำระด้วยบัตร' : 'Paid by card', 'good');
     }
-    if (agent === 'Lite_Bill_Agent' && /(convenient to pay by|สะดวกมั้ยคะ|back to your bill|กลับมาเรื่องค่าบริการ|which day works|สะดวกชำระวันไหน)/i.test(text)) dateCard();
+    if (agent === 'Lite_Bill_Agent' && /(convenient to pay by|สะดวกมั้ยคะ|back to your bill|กลับมาเรื่องค่าบริการ|which day works|สะดวกชำระวันไหน|earliest day you could pay|สะดวกชำระเร็วที่สุดวันไหน)/i.test(text)) dateCard();
     return '';
   }
   // Date picker under the payment-date question. Each choice is sent as the customer's own words.
@@ -276,6 +278,29 @@
     c.querySelector('.paynow-opt').onclick = () => { c.querySelectorAll('button').forEach((x) => (x.disabled = true)); send(th ? 'ขอชำระตอนนี้เลยค่ะ' : 'I want to pay now'); };
     c.querySelectorAll('.day').forEach((b) => (b.onclick = () => choose(days[+b.dataset.i], +b.dataset.i, b)));
     c.querySelector('.pick button').onclick = () => { const v = c.querySelector('input').value; if (!v) return; const d = new Date(v + 'T12:00:00'); const diff = Math.round((d - new Date(now.toDateString())) / 864e5); choose(d, diff <= 1 ? Math.max(diff, 0) : 9, null); };
+  }
+
+  // Free airport food/drink privilege as an e-coupon (web only). 'comfort' after "I can't pay", 'thanks' after a card payment.
+  function treatCard(kind) {
+    const th = curLang === 'th', pr = profile(), v = pr.privilege;
+    if (!v) return;
+    const code = (v.brand.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()) + '-' + String(Date.now()).slice(-6);
+    const head = kind === 'thanks' ? (th ? '🎉 ขอบคุณที่ชำระค่าบริการ' : '🎉 Thanks for paying') : (th ? '💚 ของขวัญเล็กๆ จากอารีย์' : '💚 A little treat, on us');
+    const qr = Array.from({ length: 81 }, (_, i) => `<i class="${(i * 5 + (i % 9) * 7 + code.length) % 4 < 2 ? 'on' : ''}"></i>`).join('');
+    const c = addCard(`<div class="treat" style="--brand:${v.color};--brand-2:${v.accent}">
+        <div class="tr-top"><span class="tr-kicker">${head}</span><span class="tr-tier">AIS Serenade · ${esc(v.tier)}</span></div>
+        <div class="tr-body">
+          <div class="tr-logo">${v.icon}</div>
+          <div class="tr-main"><b class="tr-brand">${esc(v.brand)}</b><div class="tr-benefit">${esc(th ? v.benefit.th : v.benefit.en)}</div>
+            <div class="tr-where">✈️ ${(th ? v.where.th : v.where.en).map((x) => `<span>${esc(x)}</span>`).join('')}</div></div>
+        </div>
+        <div class="tr-cut"><i></i></div>
+        <div class="tr-foot"><div class="tr-qr">${qr}</div><div class="tr-meta"><small>${th ? 'รหัสคูปอง' : 'Coupon code'}</small><b>${code}</b><small>${th ? 'ใช้ได้ถึง 31 ม.ค. 2570 · แสดงที่เคาน์เตอร์' : 'Valid until 31 Jan 2027 · show at the counter'}</small></div>
+          <span class="tr-free">${th ? 'ฟรี' : 'FREE'}</span></div>
+      </div>`);
+    c.classList.add('treatcard'); c.style.cssText = 'padding:0;border:0;background:transparent;box-shadow:none';
+    signal(kind === 'thanks' ? (th ? '🎁 คูปองขอบคุณ ' : '🎁 Thank-you treat · ') + v.brand : (th ? '💚 มอบของขวัญปลอบใจ · ' : '💚 Comfort treat · ') + v.brand);
+    ari('happy', kind === 'thanks' ? (th ? 'ของขวัญขอบคุณค่ะ 🎁' : 'A thank-you treat 🎁') : (th ? 'อารีย์เป็นกำลังใจให้นะคะ 💚' : 'A little treat for you 💚'), 2800);
   }
 
   // Card payment template (web only): shown when Ari offers to take the payment in the chat.
@@ -327,7 +352,7 @@
       c.insertAdjacentHTML('beforeend', `<div class="pay-done"><div class="pd-check">✓</div><div><b>฿${pr.amount} ${th ? 'ชำระแล้ว' : 'paid'}</b><small>${th ? 'เลขอ้างอิง' : 'Ref'} ${ref} · ${brand(digits()) || (th ? 'บัตร' : 'Card')} •••• ${digits().slice(-4)} · ${esc(fName.value.trim().toUpperCase())}</small></div></div>`);
       scrollDown();
       await sleep(700);
-      send(th ? 'ชำระด้วยบัตรเรียบร้อยแล้วค่ะ' : "I've paid by card");
+      send.fromCard = true; try { await send(th ? 'ชำระด้วยบัตรเรียบร้อยแล้วค่ะ' : "I've paid by card"); } finally { send.fromCard = false; }
     };
   }
 
@@ -472,6 +497,8 @@
   async function send(text) {
     text = (text || '').trim();
     if (!text || !chat || ended) return;
+    const payBtn = /paid by card|ชำระด้วยบัตร/i.test(text) && document.querySelector('.card.paycard .pay-btn:not(:disabled)');
+    if (payBtn && !send.fromCard) { const t0 = Date.now(); payBtn.click(); while (Date.now() - t0 < 25000 && !(lastBotAt > t0 + 1500)) await sleep(250); return; }
     endTimer = null; $('chips').innerHTML = ''; turns++; newTurn(text);
     const cue = [...$('lines').children].find((x) => !x.classList.contains('done') && x.dataset.text === text); if (cue) { cue.classList.add('done'); markNext(); }
     document.querySelectorAll('.card .packs, .card .priv').forEach((x) => x.closest('.card').classList.add('old'));
