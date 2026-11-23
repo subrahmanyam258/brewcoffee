@@ -309,7 +309,7 @@
       ari('happy', th ? 'ชำระเรียบร้อยค่ะ ✓' : 'Paid in full ✓', 2600);
       tile('tBill', th ? 'ชำระแล้ว' : 'Paid', th ? 'ชำระด้วยบัตร' : 'Paid by card', 'good');
     }
-    if (agent === 'Lite_Bill_Agent' && /(convenient to pay by|สะดวกมั้ยคะ|back to your bill|กลับมาเรื่องค่าบริการ|which day works|สะดวกชำระวันไหน|earliest day you could pay|สะดวกชำระเร็วที่สุดวันไหน)/i.test(text)) dateCard();
+    if (agent === 'Lite_Bill_Agent' && /(convenient to pay by|convenient for you to pay|สะดวกมั้ยคะ|สะดวกชำระค่าบริการวันไหน|back to your bill|กลับมาเรื่องค่าบริการ|which day works|สะดวกชำระวันไหน|earliest day you could pay|สะดวกชำระเร็วที่สุดวันไหน)/i.test(text)) dateCard();
     return '';
   }
   // Date picker under the payment-date question. Each choice is sent as the customer's own words.
