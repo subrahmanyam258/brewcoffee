@@ -200,7 +200,7 @@ h1, h3, b, .brand, .btn { font-family: 'Kanit', 'Sarabun', sans-serif; }
 
 /* live account view (left of the chat) */
 .live { padding: 22px 26px; width: calc(100% - 700px); min-width: 360px; height: calc(100% - 62px); display: flex; flex-direction: column; gap: 14px; overflow: hidden; }
-@media (max-width: 1200px) { .live { width: calc(100% - 500px); } .mascot { display: none; } }
+@media (max-width: 1200px) { .live { width: calc(100% - 500px); } }
 .live-head h1 { margin: 0 0 2px; font-size: 28px; color: var(--teal); }
 .live-head p { margin: 0; color: var(--mut); }
 .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -671,3 +671,15 @@ body.bar-collapsed { --barh: 0px; }
 .mo-ic { font-size: 22px; } .mo-tx { flex: 1; display: flex; flex-direction: column; } .mo-tx b { font: 600 14px Kanit; color: #7c2d12; } .mo-tx small { color: var(--mut); font-size: 12px; }
 .mo-pts { padding: 3px 10px; border-radius: 99px; background: #da291c; color: #fff; font: 700 13px Kanit; }
 .mcd-bal { text-align: right; font-size: 12.5px; color: var(--mut); } .mcd-bal b { color: #a16207; }
+
+/* Ari stays on screen: pinned to the browser window (not the stage), so a short window or a
+   scrolled page never pushes Ari below the fold. --edge is the stage's right edge from the
+   window's right edge (stage-wrap: 16px padding, max 1500px, centred). */
+.mascot { position: fixed; --edge: max(16px, calc((100vw - 1500px) / 2 + 16px)); right: calc(var(--edge) + 500px); bottom: 26px; }
+.stage.with-phone .mascot { right: calc(var(--edge) + 740px); }
+@media (max-width: 1200px) {
+  .mascot { right: calc(var(--edge) + 505px); width: 120px; }
+  .mascot img { width: 105px; }
+  .stage.with-phone .mascot { right: calc(var(--edge) + 640px); }
+}
+@media (max-width: 760px) { .mascot { display: none; } }
