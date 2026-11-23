@@ -482,3 +482,84 @@ body.bar-collapsed { --barh: 0px; }
   color: var(--brand); font: 800 16px Kanit; letter-spacing: .12em; background: rgba(255,255,255,.85); animation: treatStamp .5s .45s both; }
 @keyframes treatStamp { from { opacity: 0; transform: rotate(-12deg) scale(2.2); } 70% { transform: rotate(-12deg) scale(.92); } }
 @media (max-width: 760px) { .card.treatcard { width: 100%; } .tr-logo { width: 48px; height: 48px; font-size: 27px; } }
+
+/* roaming: cinematic flight scene (overlay, no pointer events) */
+.flt { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 40%, rgba(0,68,77,.28), rgba(0,30,36,.55)); opacity: 0; transition: opacity .35s ease; }
+.flt.on { opacity: 1; } .flt.out { opacity: 0; transition: opacity .55s ease; }
+.flt-panel { position: relative; width: min(880px, 92vw); aspect-ratio: 1000 / 430; border-radius: 26px; overflow: hidden;
+  background: linear-gradient(180deg, #2b6cb0 0%, #4f9ad6 38%, #8cc7ea 70%, #d8f0fb 100%);
+  box-shadow: 0 40px 90px rgba(0,20,30,.45), inset 0 0 0 1px rgba(255,255,255,.35); transform: translateY(18px) scale(.94); transition: transform .55s cubic-bezier(.2,1.25,.4,1); }
+.flt.on .flt-panel { transform: none; } .flt.out .flt-panel { transform: translateY(-10px) scale(.97); }
+.flt-sun { position: absolute; right: 9%; top: 9%; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, #fff7d6 0%, #ffe28a 35%, rgba(255,226,138,0) 70%); filter: blur(1px); }
+.cl { position: absolute; display: block; height: 34px; border-radius: 40px; background: rgba(255,255,255,.85); filter: blur(.4px); box-shadow: 30px -14px 0 4px rgba(255,255,255,.85), 62px 0 0 -2px rgba(255,255,255,.85); animation: drift linear infinite; }
+.cl.c1 { top: 16%; width: 90px; animation-duration: 9s; } .cl.c2 { top: 52%; width: 120px; opacity: .7; animation-duration: 13s; animation-delay: -4s; }
+.cl.c3 { top: 30%; width: 70px; opacity: .55; animation-duration: 16s; animation-delay: -9s; } .cl.c4 { top: 72%; width: 140px; opacity: .9; animation-duration: 7s; animation-delay: -2s; }
+@keyframes drift { from { transform: translateX(110vw); } to { transform: translateX(-30vw); } }
+.flt-cap { position: absolute; left: 50%; top: 5%; transform: translateX(-50%); white-space: nowrap; padding: 7px 16px; border-radius: 99px; background: rgba(0,68,77,.82); color: #fff; font: 500 14px Kanit; box-shadow: 0 8px 18px rgba(0,0,0,.18); }
+.flt-cap b { color: #c6f36a; }
+.flt-svg { position: absolute; left: 0; top: 8%; width: 100%; height: 88%; overflow: visible; }
+.flt-svg .pulse { fill: rgba(255,255,255,.35); transform-box: fill-box; transform-origin: center; animation: fltPulse 1.4s ease-out infinite; }
+.flt-b { opacity: 0; transform-box: fill-box; transform-origin: center; } .flt.landed .flt-b { opacity: 1; animation: fltPop .5s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes fltPulse { from { transform: scale(.4); opacity: .9; } to { transform: scale(1.6); opacity: 0; } }
+@keyframes fltPop { from { transform: scale(0); } to { transform: scale(1); } }
+.flt-pin { position: absolute; transform: translate(-50%, 18px); display: grid; justify-items: center; padding: 5px 12px; border-radius: 12px; background: #fff; box-shadow: 0 10px 20px rgba(0,0,0,.18); text-align: center; }
+.flt-pin b { font: 700 18px Kanit; color: var(--teal); letter-spacing: .06em; line-height: 1.1; } .flt-pin small { font-size: 12px; color: var(--mut); white-space: nowrap; }
+.flt-pin.b { opacity: 0; transform: translate(-50%, 30px) scale(.8); transition: opacity .35s, transform .45s cubic-bezier(.2,1.5,.4,1); }
+.flt.landed .flt-pin.b { opacity: 1; transform: translate(-50%, 18px); }
+.flt-done { position: absolute; left: 50%; bottom: 6%; display: flex; gap: 10px; align-items: center; padding: 9px 16px 9px 10px; border-radius: 16px; background: #fff; box-shadow: 0 14px 30px rgba(0,0,0,.22);
+  opacity: 0; transform: translate(-50%, 24px) scale(.9); transition: opacity .35s .15s, transform .5s .15s cubic-bezier(.2,1.5,.4,1); }
+.flt.landed .flt-done { opacity: 1; transform: translate(-50%, 0); }
+.flt-done .ok { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--green); color: #fff; font: 700 18px Kanit; }
+.flt-done b { display: block; font: 600 15px Kanit; color: var(--teal); } .flt-done small { color: var(--mut); font-size: 12.5px; }
+@media (max-width: 760px) { .flt-panel { aspect-ratio: 1000 / 560; border-radius: 20px; } .flt-cap { font-size: 12px; } .flt-pin b { font-size: 14px; } .flt-sun { width: 70px; height: 70px; } }
+
+/* roaming: in-chat boarding pass */
+.card.bpcard { flex-shrink: 0; }
+.bpass { display: grid; grid-template-columns: 1fr 92px; border-radius: 16px; overflow: hidden; background: #fff; box-shadow: 0 14px 30px rgba(67,56,202,.18); animation: bpIn .6s cubic-bezier(.2,1.3,.4,1) both; }
+@keyframes bpIn { from { opacity: 0; transform: translateY(16px) rotateX(35deg); } }
+.bp-main { padding: 10px 14px 12px; }
+.bp-head { display: flex; align-items: center; gap: 8px; font: 600 11.5px Kanit; letter-spacing: .1em; color: var(--mut); }
+.bp-logo { padding: 1px 7px; border-radius: 6px; background: var(--green); color: #fff; letter-spacing: .04em; }
+.bp-ok { margin-left: auto; padding: 1px 8px; border-radius: 99px; background: #dcfce7; color: #15803d; letter-spacing: .06em; }
+.bp-route { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; margin: 8px 0; }
+.bp-route small { display: block; font: 600 10.5px Kanit; letter-spacing: .12em; color: var(--mut); }
+.bp-route b { display: block; font: 700 26px Kanit; color: #312e81; letter-spacing: .04em; line-height: 1; }
+.bp-route em { font-style: normal; font-size: 12px; color: var(--mut); white-space: nowrap; } .bp-route .r { text-align: right; }
+.bp-line { position: relative; height: 2px; border-top: 2px dashed #a5b4fc; }
+.bp-line span { position: absolute; left: 0; top: -13px; font-size: 18px; color: #4f46e5; animation: bpFly 2.4s cubic-bezier(.45,.05,.35,1) .3s both; }
+@keyframes bpFly { from { left: 0; } to { left: calc(100% - 18px); } }
+.bp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding-top: 8px; border-top: 1px solid #eef2ff; }
+.bp-grid small { display: block; font: 600 10px Kanit; letter-spacing: .1em; color: var(--mut); } .bp-grid b { font: 600 13.5px Kanit; color: var(--teal); }
+.bp-stub { position: relative; display: grid; place-items: center; gap: 4px; padding: 10px 6px; background: linear-gradient(180deg, #eef2ff, #e0e7ff); border-left: 2px dashed #c7d2fe; }
+.bp-stub::before, .bp-stub::after { content: ''; position: absolute; left: -9px; width: 16px; height: 16px; border-radius: 50%; background: #f7faf8; }
+.bp-stub::before { top: -8px; } .bp-stub::after { bottom: -8px; }
+.bp-flag { font-size: 30px; line-height: 1; }
+.bp-bars { display: flex; gap: 1.5px; height: 34px; align-items: stretch; } .bp-bars i { display: block; background: #312e81; border-radius: 1px; }
+.bp-stub small { font: 600 10px Kanit; letter-spacing: .08em; color: #4338ca; }
+@media (max-width: 760px) { .bpass { grid-template-columns: 1fr 74px; } .bp-route b { font-size: 21px; } .bp-grid { grid-template-columns: repeat(2, 1fr); } }
+.flt-plane { transition: opacity .45s ease .1s; } .flt.landed .flt-plane { opacity: 0; }
+.flt-cap { transition: background .3s; } .flt.landed .flt-cap { background: rgba(79,125,0,.9); }
+
+/* roaming flight scene inside the chat (card) */
+.card.fltcard { flex-shrink: 0; width: 100%; align-self: stretch; }
+.fltcard .flt-panel { position: relative; width: 100%; aspect-ratio: 1000 / 600; border-radius: 18px; overflow: hidden;
+  background: linear-gradient(180deg, #2b6cb0 0%, #4f9ad6 40%, #8cc7ea 72%, #d8f0fb 100%);
+  box-shadow: 0 16px 34px rgba(0,68,77,.22), inset 0 0 0 1px rgba(255,255,255,.35); transform: translateY(14px) scale(.96); opacity: 0;
+  transition: transform .55s cubic-bezier(.2,1.25,.4,1), opacity .35s ease; }
+.fltcard .flt-panel.on { transform: none; opacity: 1; }
+.fltcard .flt-svg { position: absolute; inset: 0; top: 0; width: 100%; height: 100%; }
+.fltcard .flt-sun { right: 7%; top: 8%; width: 74px; height: 74px; }
+.fltcard .cl { height: 18px; box-shadow: 16px -8px 0 2px rgba(255,255,255,.85), 34px 0 0 -1px rgba(255,255,255,.85); animation-name: driftIn; }
+.fltcard .cl.c1 { width: 50px; } .fltcard .cl.c2 { width: 64px; } .fltcard .cl.c3 { width: 40px; } .fltcard .cl.c4 { width: 76px; }
+@keyframes driftIn { from { left: 105%; } to { left: -30%; } }
+.fltcard .flt-cap { top: 5%; padding: 5px 12px; font-size: 12.5px; }
+.fltcard .flt-panel.landed .flt-cap { background: rgba(79,125,0,.92); }
+.fltcard .flt-pin { padding: 3px 9px; border-radius: 10px; transform: translate(-50%, 14px); }
+.fltcard .flt-pin b { font-size: 14px; } .fltcard .flt-pin small { font-size: 10.5px; }
+.fltcard .flt-pin.b { transform: translate(-50%, 26px) scale(.8); } .fltcard .flt-panel.landed .flt-pin.b { opacity: 1; transform: translate(-50%, 14px); }
+.fltcard .flt-panel.landed .flt-b { opacity: 1; animation: fltPop .5s cubic-bezier(.2,1.6,.4,1) both; }
+.fltcard .flt-panel.landed .flt-plane { opacity: 0; }
+.fltcard .flt-done { bottom: 5%; padding: 6px 12px 6px 7px; gap: 8px; border-radius: 13px; }
+.fltcard .flt-done .ok { width: 26px; height: 26px; font-size: 14px; }
+.fltcard .flt-done b { font-size: 13px; } .fltcard .flt-done small { font-size: 11px; white-space: nowrap; }
+.fltcard .flt-panel.landed .flt-done { opacity: 1; transform: translate(-50%, 0); }

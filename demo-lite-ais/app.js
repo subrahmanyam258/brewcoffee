@@ -151,20 +151,62 @@
     for (let i = 0; i < 70; i++) { const p = document.createElement('i'); p.style.left = Math.random() * 100 + 'vw'; p.style.background = colors[i % colors.length]; p.style.animationDelay = Math.random() * 0.6 + 's'; box.appendChild(p); setTimeout(() => p.remove(), 2600); }
   }
   // Themed celebrations (no confetti): plane for roaming, receipt for payment, gift for privileges, buzz for SMS.
-  function flyPlane(dest) {
-    const fx = $('fx'); fx.innerHTML = '';
-    const r = document.createElement('div'); r.className = 'fx-route';
-    r.innerHTML = '<svg viewBox="0 0 1000 300" preserveAspectRatio="none"><path d="M 40 260 Q 500 -120 960 200"/></svg>';
-    fx.appendChild(r);
-    const box = r.getBoundingClientRect();
-    const pinA = document.createElement('div'); pinA.className = 'fx-pin'; pinA.textContent = curLang === 'th' ? '🇹🇭 กรุงเทพฯ' : '🇹🇭 Bangkok';
-    pinA.style.left = box.left - 10 + 'px'; pinA.style.top = box.bottom - 10 + 'px'; fx.appendChild(pinA);
-    const pinB = document.createElement('div'); pinB.className = 'fx-pin'; pinB.textContent = '📍 ' + dest; pinB.style.left = box.right - 60 + 'px'; pinB.style.top = box.top + box.height * 0.62 + 'px'; pinB.style.animationDelay = '1.6s'; fx.appendChild(pinB);
-    const plane = document.createElement('div'); plane.className = 'fx-plane'; plane.textContent = '✈️';
-    const sx = box.width / 1000, sy = box.height / 300;
-    plane.style.offsetPath = `path('M ${box.left + 40 * sx} ${box.top + 260 * sy} Q ${box.left + 500 * sx} ${box.top - 120 * sy} ${box.left + 960 * sx} ${box.top + 200 * sy}')`;
-    plane.style.left = '0'; plane.style.top = '0'; fx.appendChild(plane);
-    setTimeout(() => { fx.innerHTML = ''; }, 3600);
+  // Destination airport for the flight scene and the boarding pass.
+  const AIRPORTS = [
+    [/japan|ญี่ปุ่น/i, 'NRT', 'Tokyo', 'โตเกียว', '🇯🇵'], [/korea|เกาหลี/i, 'ICN', 'Seoul', 'โซล', '🇰🇷'], [/singapore|สิงคโปร์/i, 'SIN', 'Singapore', 'สิงคโปร์', '🇸🇬'],
+    [/china|จีน/i, 'PEK', 'Beijing', 'ปักกิ่ง', '🇨🇳'], [/hong kong|ฮ่องกง/i, 'HKG', 'Hong Kong', 'ฮ่องกง', '🇭🇰'], [/usa|america|อเมริกา/i, 'LAX', 'Los Angeles', 'ลอสแอนเจลิส', '🇺🇸'],
+    [/europe|ยุโรป/i, 'CDG', 'Paris', 'ปารีส', '🇪🇺'],
+  ];
+  const PACKS = { 3: ['2 GB', '399'], 7: ['5 GB', '799'], 15: ['12 GB', '1,299'] };
+  function airport(dest) { const a = AIRPORTS.find(([rx]) => rx.test(dest || '')); return a ? { code: a[1], city: curLang === 'th' ? a[3] : a[2], flag: a[4] } : { code: 'INT', city: dest || '', flag: '🌏' }; }
+  // Flight scene as a chat card: sky, clouds, the route drawn from Bangkok, an airliner with a contrail, then "roaming active".
+  function flyPlane(dest, days) {
+    const th = curLang === 'th', to = airport(dest), pk = PACKS[+days] || ['', ''];
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const D = 'M 120 468 C 330 140, 690 140, 880 372';
+    const c = addCard(`<div class="flt-panel">
+        <div class="flt-sun"></div><i class="cl c1"></i><i class="cl c2"></i><i class="cl c3"></i><i class="cl c4"></i>
+        <svg class="flt-svg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs><linearGradient id="trailG" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset="1" stop-color="#fff" stop-opacity=".95"/></linearGradient>
+            <filter id="pShadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="8" stdDeviation="5" flood-color="#00444d" flood-opacity=".35"/></filter></defs>
+          <path id="fltRoute" d="${D}" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="5" stroke-dasharray="3 18" stroke-linecap="round"/>
+          <path class="flt-trail" d="${D}" fill="none" stroke="url(#trailG)" stroke-width="9" stroke-linecap="round"/>
+          <g><circle cx="120" cy="468" r="34" class="pulse"/><circle cx="120" cy="468" r="14" fill="#fff" stroke="#00444d" stroke-width="6"/></g>
+          <g class="flt-b"><circle cx="880" cy="372" r="34" class="pulse"/><circle cx="880" cy="372" r="14" fill="#7ab800" stroke="#fff" stroke-width="6"/></g>
+          <g class="flt-plane" filter="url(#pShadow)">
+            <g transform="scale(2.1)">
+              <path d="M-30 0 C-30 -3 -26 -4.5 -18 -4.5 L 20 -4.5 C 30 -4.5 36 -2 36 0 C 36 2 30 4.5 20 4.5 L -18 4.5 C -26 4.5 -30 3 -30 0 Z" fill="#fff"/>
+              <path d="M 4 -4 L -10 -30 L -2 -30 L 18 -4 Z M 4 4 L -10 30 L -2 30 L 18 4 Z" fill="#e8f3ef"/>
+              <path d="M -22 -4 L -30 -16 L -25 -16 L -14 -4 Z M -22 4 L -30 16 L -25 16 L -14 4 Z" fill="#e8f3ef"/>
+              <path d="M 24 -2.6 C 30 -2.4 33 -1.2 33.5 0 L 24 0 Z" fill="#00444d" opacity=".75"/>
+              <rect x="-14" y="-1.2" width="30" height="2.4" rx="1.2" fill="#7ab800"/>
+            </g>
+            ${reduce ? '' : '<animateMotion dur="2.7s" begin="indefinite" fill="freeze" rotate="auto" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".45 .05 .35 1"><mpath href="#fltRoute"/></animateMotion>'}
+          </g>
+        </svg>
+        <div class="flt-cap">✈️ ${th ? 'กำลังเปิดโรมมิ่ง' : 'Turning on roaming'} · <b>${esc(dest)}</b>${days ? ` · ${days} ${th ? 'วัน' : 'days'}` : ''}</div>
+        <div class="flt-pin a" style="left:12%;top:78%"><b>BKK</b><small>${th ? 'กรุงเทพฯ' : 'Bangkok'} 🇹🇭</small></div>
+        <div class="flt-pin b" style="left:88%;top:62%"><b>${to.code}</b><small>${esc(to.city)} ${to.flag}</small></div>
+        <div class="flt-done"><span class="ok">✓</span><div><b>${th ? 'โรมมิ่งพร้อมใช้งาน' : 'Roaming active'}</b><small>${days ? `${days} ${th ? 'วัน' : 'days'} · ${pk[0]} · ฿${pk[1]} · ` : ''}${th ? 'เริ่มเมื่อถึงปลายทาง' : 'starts on arrival'}</small></div></div>
+      </div>`);
+    c.classList.add('fltcard'); c.style.cssText = 'padding:0;border:0;background:transparent;box-shadow:none';
+    const root = c.querySelector('.flt-panel'), trail = c.querySelector('.flt-trail'), anim = c.querySelector('animateMotion'), plane = c.querySelector('.flt-plane');
+    // Unique ids per card so several flights in one chat do not share a route.
+    const uid = 'f' + Date.now(); c.querySelector('#fltRoute').id = uid + 'r'; c.querySelector('#trailG').id = uid + 'g'; c.querySelector('#pShadow').id = uid + 's';
+    c.querySelector('mpath') && c.querySelector('mpath').setAttribute('href', '#' + uid + 'r');
+    trail.setAttribute('stroke', `url(#${uid}g)`); plane.setAttribute('filter', `url(#${uid}s)`);
+    const len = trail.getTotalLength(); trail.style.strokeDasharray = len; trail.style.strokeDashoffset = len;
+    plane.setAttribute('transform', reduce ? 'translate(880 372) rotate(30)' : 'translate(120 468)');
+    requestAnimationFrame(() => root.classList.add('on'));
+    setTimeout(() => {
+      if (anim) { plane.removeAttribute('transform'); anim.beginElement(); }
+      trail.style.transition = reduce ? 'none' : 'stroke-dashoffset 2.7s cubic-bezier(.45,.05,.35,1)'; trail.style.strokeDashoffset = '0';
+    }, reduce ? 0 : 500);
+    setTimeout(() => {
+      root.classList.add('landed');
+      const cap = root.querySelector('.flt-cap'); if (cap) cap.innerHTML = `🛬 ${th ? 'ยินดีต้อนรับสู่' : 'Welcome to'} <b>${esc(to.city)}</b> ${to.flag}`;
+      scrollDown();
+    }, reduce ? 200 : 3200);
   }
   function buzzPhone(text) {
     const ph = $('phone'); ph.classList.remove('buzz'); void ph.offsetWidth; ph.classList.add('buzz');
@@ -210,13 +252,12 @@
       c.querySelectorAll('.pack').forEach((el) => (el.onclick = () => { el.classList.add('sel'); send(th ? `${el.dataset.d} วัน` : `the ${el.dataset.d} day one`); }));
     } else if (/(activate the|ยืนยันสมัครแพ็กเกจ|redeem .* points\?|ยืนยันแลก)/i.test(text)) {
       chips(th ? ['ใช่ ยืนยันค่ะ', 'ไม่เป็นไรค่ะ'] : ['Yes please', 'No thanks']);
-    } else if (/(roaming package for .* is active|สมัครแพ็กเกจโรมมิ่ง .* แล้ว|is redeemed|แลก.*แล้ว)/i.test(text)) {
+    } else if (/(roaming package for .* is active|สมัครแพ็กเกจโรมมิ่ง.*แล้ว|is redeemed|แลก.*แล้ว)/i.test(text)) {
       signal('🎉 Transaction done'); ari('happy', sayL('done'), 2600);
       if (/roaming|โรมมิ่ง/i.test(text)) {
         const mm = text.match(/(\d+)-day roaming package for ([^.]+?) is|แพ็กเกจโรมมิ่ง (\d+) วันสำหรับ(\S+?)แล้ว/);
         const dest = mm ? (mm[2] || mm[4]) : (th ? 'ปลายทาง' : 'Destination'), days = mm ? (mm[1] || mm[3]) : '';
-        flyPlane(dest);
-        addCard(`<div class="pass"><div><small>${th ? 'บัตรผ่านโรมมิ่ง' : 'Roaming pass'}</small><div class="route">BKK ✈ ${esc(dest)}</div><small>${days} ${th ? 'วัน · เริ่มเมื่อถึงปลายทาง' : 'days · starts on arrival'}</small></div><span class="stamp">${th ? 'ใช้งานได้' : 'ACTIVE'}</span></div>`);
+        flyPlane(dest, days);
       } else {
         addCard(`<div class="gift"><div class="box">🎁</div><div class="coupon">${th ? 'คูปองพร้อมใช้ในแอป myAIS' : 'Coupon ready in myAIS'} ✓</div></div>`);
       }
