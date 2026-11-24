@@ -249,8 +249,12 @@
   function profile() { return PROFILES[st.profile] || PROFILES[st.scenario.profile]; }
   function afterBot(text, agent) {
     const p = profile(), th = curLang === 'th', low = text.toLowerCase();
-    const faq = FAQS.find((f) => text.startsWith(f.en.slice(0, 40)) || text.startsWith(f.th.slice(0, 30)));
-    if (faq) { faqs++; const tp = TOPIC[faq.topic]; signal(`${tp.ic} ${tp.en} · ${faq.id}`); return `<span class="faqtag">${tp.ic} ${th ? tp.th : tp.en} · ${esc(th ? faq.title[1] : faq.title[0])} · KB ${faq.id}</span>`; }
+    // A reply can carry two FAQ answers back to back, so tag every one found, in order.
+    const hits = FAQS.map((f) => { const i = Math.max(text.indexOf(f.en.slice(0, 40)), text.indexOf(f.th.slice(0, 30))); return { f, i }; })
+      .filter((h) => h.i >= 0).sort((a, b) => a.i - b.i).map((h) => h.f);
+    if (hits.length) {
+      return hits.map((faq) => { faqs++; const tp = TOPIC[faq.topic]; signal(`${tp.ic} ${tp.en} · ${faq.id}`); return `<span class="faqtag">${tp.ic} ${th ? tp.th : tp.en} · ${esc(th ? faq.title[1] : faq.title[0])} · KB ${faq.id}</span>`; }).join(' ');
+    }
     if (agent === 'Lite_Bill_Agent' && /(ending in|ลงท้ายด้วย)/.test(text)) {
       addCard(`<h4>${th ? 'ยอดค้างชำระ' : 'Amount overdue'}</h4><div class="bill-amt">฿${p.amount}</div><div class="bill-row"><span>${th ? 'เบอร์' : 'Line'} •••• ${p.line}</span><span>${th ? 'ครบกำหนด' : 'Due'} ${p.due}</span></div><div class="bill-row"><span>3BB Fibre</span><span class="status">${th ? 'เลยกำหนด' : 'Overdue'}</span></div>`);
       signal('🛡️ Amount protected from barge-in');
