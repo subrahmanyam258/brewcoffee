@@ -741,8 +741,6 @@
       if (call !== c) return;
       const v = (c.voice = c.sdk.voice());
       v.on('stateChange', (e) => { if (call !== c) return; $('callSub').textContent = CALL_STATE[e.state] || e.state; setConn(e.state === 'error' ? 'err' : 'on', 'Live call · ' + (CALL_STATE[e.state] || e.state)); });
-      v.on('transcription', (e) => { if (call !== c || e.isFinal) return; if (!c.partial) c.partial = callLine('tx-you live-partial', e.text); else c.partial.textContent = e.text; $('callTx').scrollTop = 1e9; });
-      v.on('transcriptionFinal', (e) => { if (call !== c) return; if (c.partial) { c.partial.remove(); c.partial = null; } if (e.text) callLine('tx-you', e.text); });
       v.on('responseEnd', (e) => { if (call !== c || !e.text) return; callLine('tx-ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('tx-sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); });
       v.on('bargeIn', () => { if (call === c) callLine('tx-sys', th ? '🎙 พูดแทรก' : '🎙 Barge-in'); });
       v.on('micPermissionDenied', () => { if (call === c) { callLine('tx-err', th ? 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน' : 'Microphone permission was denied. Allow the mic and try again.'); endCall(true); } });
@@ -755,6 +753,8 @@
       });
       await v.start();
       if (call !== c) return;
+      // The SDK creates its realtime player after several awaits; make sure Chrome lets it play.
+      try { const pl = v.realtimePlayer; const ac = pl && pl.audioContext; if (ac && ac.state !== 'running') await ac.resume(); } catch { /* ignore */ }
       // The SDK plays Ari's realtime audio but does not send the microphone in realtime mode,
       // so the page streams it: 24 kHz mono PCM16 in ~85 ms chunks over the same session.
       await startMic(c);
