@@ -706,3 +706,13 @@ body.bar-collapsed { --barh: 0px; }
 .cbtn { border: 0; border-radius: 999px; padding: 7px 12px; font: 600 12px Kanit, system-ui, sans-serif; background: #334155; color: #fff; cursor: pointer; }
 .cbtn.end { background: #e11d48; }
 .cbtn.muted { background: #f59e0b; }
+/* Live call: keep everything inside the phone screen */
+.phone.live-call { width: 300px; height: 600px; }
+.phone.live-call .phone-screen { overflow: hidden; }
+.call.live { grid-template-columns: minmax(0, 1fr); width: 100%; box-sizing: border-box; padding: 22px 10px 10px; }
+.call.live > * { min-width: 0; max-width: 100%; }
+.call.live #callWho, .call.live #callSub { overflow-wrap: anywhere; }
+.call-live { min-width: 0; }
+.call-tx { height: 330px; }
+.call-tx p { overflow-wrap: anywhere; box-sizing: border-box; }
+@media (max-width: 900px) { .phone.live-call { width: 260px; height: 540px; } .call-tx { height: 270px; } }
