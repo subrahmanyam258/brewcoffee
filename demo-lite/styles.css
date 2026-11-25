@@ -692,15 +692,15 @@ body.bar-collapsed { --barh: 0px; }
 /* ── Live browser call (Call Ari) ───────────────────────────────────────── */
 .btn.call-btn { background: #7ab800; color: #fff; border-color: transparent; }
 .btn.call-btn.on { background: #e11d48; }
-.call.live { padding-top: 22px; }
-.call.live .call-ava { width: 60px; height: 60px; font-size: 28px; }
+.call.on-call { padding-top: 22px; }
+.call.on-call .call-ava { width: 60px; height: 60px; font-size: 28px; }
 .call-live { width: 100%; display: grid; gap: 8px; margin-top: 6px; }
 .call-tx { height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px 2px; text-align: left; }
 .call-tx p { margin: 0; padding: 6px 9px; border-radius: 12px; font-size: 11.5px; line-height: 1.35; max-width: 92%; }
-.call-tx .you { align-self: flex-end; background: #7ab800; color: #fff; }
-.call-tx .ari { align-self: flex-start; background: #fff; color: #0f172a; }
-.call-tx .sys { align-self: center; background: transparent; color: #94a3b8; font-size: 10.5px; padding: 0; }
-.call-tx .err { align-self: center; background: #fee2e2; color: #b91c1c; }
+.call-tx .tx-you { align-self: flex-end; background: #7ab800; color: #fff; }
+.call-tx .tx-ari { align-self: flex-start; background: #fff; color: #0f172a; }
+.call-tx .tx-sys { align-self: center; background: transparent; color: #94a3b8; font-size: 10.5px; padding: 0; }
+.call-tx .tx-err { align-self: center; background: #fee2e2; color: #b91c1c; }
 .call-tx .live-partial { opacity: .65; font-style: italic; }
 .call-ctl { display: flex; gap: 8px; justify-content: center; }
 .cbtn { border: 0; border-radius: 999px; padding: 7px 12px; font: 600 12px Kanit, system-ui, sans-serif; background: #334155; color: #fff; cursor: pointer; }
@@ -709,9 +709,9 @@ body.bar-collapsed { --barh: 0px; }
 /* Live call: keep everything inside the phone screen */
 .phone.live-call { width: 300px; height: 600px; }
 .phone.live-call .phone-screen { overflow: hidden; }
-.call.live { grid-template-columns: minmax(0, 1fr); width: 100%; box-sizing: border-box; padding: 22px 10px 10px; }
-.call.live > * { min-width: 0; max-width: 100%; }
-.call.live #callWho, .call.live #callSub { overflow-wrap: anywhere; }
+.call.on-call { grid-template-columns: minmax(0, 1fr); width: 100%; box-sizing: border-box; padding: 22px 10px 10px; }
+.call.on-call > * { min-width: 0; max-width: 100%; }
+.call.on-call #callWho, .call.on-call #callSub { overflow-wrap: anywhere; }
 .call-live { min-width: 0; }
 .call-tx { height: 330px; }
 .call-tx p { overflow-wrap: anywhere; box-sizing: border-box; }
@@ -724,10 +724,10 @@ body.bar-collapsed { --barh: 0px; }
 .call-menu button[hidden] { display: none; }
 .call-menu small { font-weight: 400; color: #64748b; font-size: 11px; }
 /* Live call layout: a single vertical column filling the phone screen */
-.call.live { display: flex !important; flex-direction: column; align-items: center; gap: 6px; width: 100%; height: 100%; padding: 16px 8px 8px; box-sizing: border-box; }
-.call.live .call-ava { flex: none; }
-.call.live #callWho, .call.live #callSub { text-align: center; width: 100%; }
-.call.live .wave { flex: none; }
-.call.live .call-live { flex: 1 1 auto; width: 100%; display: flex; flex-direction: column; min-height: 0; }
-.call.live .call-tx { flex: 1 1 auto; height: auto; min-height: 0; width: 100%; }
-.call.live .call-tx p { max-width: 88%; word-break: normal; overflow-wrap: break-word; }
+.call.on-call { display: flex !important; flex-direction: column; align-items: center; gap: 6px; width: 100%; height: 100%; padding: 16px 8px 8px; box-sizing: border-box; }
+.call.on-call .call-ava { flex: none; }
+.call.on-call #callWho, .call.on-call #callSub { text-align: center; width: 100%; }
+.call.on-call .wave { flex: none; }
+.call.on-call .call-live { flex: 1 1 auto; width: 100%; display: flex; flex-direction: column; min-height: 0; }
+.call.on-call .call-tx { flex: 1 1 auto; height: auto; min-height: 0; width: 100%; }
+.call.on-call .call-tx p { max-width: 88%; word-break: normal; overflow-wrap: break-word; }

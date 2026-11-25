@@ -658,7 +658,7 @@
     [['tBill', null, th0 ? `เลยกำหนด · ครบกำหนด ${p.due}` : `Overdue · due ${p.due}`, 'bad'], ['tPts', null, p.tier, ''], ['tRoam', th0 ? 'ยังไม่มีแพ็กเกจ' : 'No package', th0 ? 'พร้อมเดินทาง' : 'Ready to travel', ''], ['tSms', th0 ? 'ยังไม่ส่ง' : 'Not sent', th0 ? 'SMS ตามภาษาของการสนทนา' : 'SMS in the chat language', '']].forEach(([id, b, em, cls]) => { const el = $(id); if (b != null) el.querySelector('b').textContent = b; el.querySelector('em').textContent = em; el.classList.remove('good', 'bad', 'flash'); if (cls) el.classList.add(cls); });
     turnEl = null;
     if (call) endCall(true);
-    $('callLive').hidden = true; $('callView').classList.remove('live'); $('phone').classList.remove('live-call');
+    $('callLive').hidden = true; $('callView').classList.remove('on-call'); $('phone').classList.remove('live-call');
     $('chat').hidden = true; $('phone').hidden = true; $('callView').hidden = true; $('smsView').hidden = true; $('stage').classList.remove('with-phone');
     if ((entry === 'reminder_link' || entry === 'travel_link') && !fromSms) {
       $('phone').hidden = false; $('smsView').hidden = false; $('stage').classList.add('with-phone');
@@ -720,12 +720,12 @@
     // and the agents switch to English when the caller speaks English.
     const p = profile(), callLang = curLang === 'en' ? 'en' : 'th', th = callLang === 'th', entry = 'inbound';
     $('chat').hidden = true; $('smsView').hidden = true;
-    $('phone').hidden = false; $('phone').classList.add('live-call'); $('callView').hidden = false; $('callView').classList.add('live'); $('stage').classList.add('with-phone');
+    $('phone').hidden = false; $('phone').classList.add('live-call'); $('callView').hidden = false; $('callView').classList.add('on-call'); $('stage').classList.add('with-phone');
     $('callWho').textContent = th ? 'อารี · AIS (สายจริง)' : 'Ari · AIS (live call)';
     $('callSub').textContent = th ? 'กำลังเชื่อมต่อ…' : 'Connecting…';
     $('callLive').hidden = false; $('callTx').innerHTML = '';
     $('btnCall').classList.add('on'); $('btnCall').lastElementChild.textContent = th ? ' วางสาย' : ' Hang up';
-    callLine('sys', th ? 'สายโทรเข้า ภาษาไทย (พูดภาษาอังกฤษได้) พูดได้เลยเมื่ออารีทักทาย พูดแทรกระหว่างที่อารีตอบคำถามได้' : 'Inbound call in English (Thai works too). Speak after Ari greets you; you can cut in while Ari answers a question.');
+    callLine('tx-sys', th ? 'สายโทรเข้า ภาษาไทย (พูดภาษาอังกฤษได้) พูดได้เลยเมื่ออารีทักทาย พูดแทรกระหว่างที่อารีตอบคำถามได้' : 'Inbound call in English (Thai works too). Speak after Ari greets you; you can cut in while Ari answers a question.');
     setConn('idle', 'Starting call…');
     const c = (call = { muted: false, partial: null });
     try {
@@ -735,23 +735,23 @@
       if (cfg.channelId) opts.channelId = cfg.channelId;
       c.sdk = new AgentSDK(opts);
       c.sdk.on('sessionStart', (e) => { $('sessId').textContent = e.sessionId || '—'; });
-      c.sdk.on('error', (e) => { if (call === c) callLine('err', '⚠️ ' + errText(e)); });
+      c.sdk.on('error', (e) => { if (call === c) callLine('tx-err', '⚠️ ' + errText(e)); });
       c.sdk.on('sessionEnd', () => { if (call === c) endCall(true); });
       await c.sdk.connect();
       if (call !== c) return;
       const v = (c.voice = c.sdk.voice());
       v.on('stateChange', (e) => { if (call !== c) return; $('callSub').textContent = CALL_STATE[e.state] || e.state; setConn(e.state === 'error' ? 'err' : 'on', 'Live call · ' + (CALL_STATE[e.state] || e.state)); });
-      v.on('transcription', (e) => { if (call !== c || e.isFinal) return; if (!c.partial) c.partial = callLine('you live-partial', e.text); else c.partial.textContent = e.text; $('callTx').scrollTop = 1e9; });
-      v.on('transcriptionFinal', (e) => { if (call !== c) return; if (c.partial) { c.partial.remove(); c.partial = null; } if (e.text) callLine('you', e.text); });
-      v.on('responseEnd', (e) => { if (call !== c || !e.text) return; callLine('ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); });
-      v.on('bargeIn', () => { if (call === c) callLine('sys', th ? '🎙 พูดแทรก' : '🎙 Barge-in'); });
-      v.on('micPermissionDenied', () => { if (call === c) { callLine('err', th ? 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน' : 'Microphone permission was denied. Allow the mic and try again.'); endCall(true); } });
-      v.on('error', (e) => { if (call === c) callLine('err', '⚠️ ' + errText(e && e.error ? e.error : e)); });
+      v.on('transcription', (e) => { if (call !== c || e.isFinal) return; if (!c.partial) c.partial = callLine('tx-you live-partial', e.text); else c.partial.textContent = e.text; $('callTx').scrollTop = 1e9; });
+      v.on('transcriptionFinal', (e) => { if (call !== c) return; if (c.partial) { c.partial.remove(); c.partial = null; } if (e.text) callLine('tx-you', e.text); });
+      v.on('responseEnd', (e) => { if (call !== c || !e.text) return; callLine('tx-ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('tx-sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); });
+      v.on('bargeIn', () => { if (call === c) callLine('tx-sys', th ? '🎙 พูดแทรก' : '🎙 Barge-in'); });
+      v.on('micPermissionDenied', () => { if (call === c) { callLine('tx-err', th ? 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน' : 'Microphone permission was denied. Allow the mic and try again.'); endCall(true); } });
+      v.on('error', (e) => { if (call === c) callLine('tx-err', '⚠️ ' + errText(e && e.error ? e.error : e)); });
       v.on('realtimeTranscript', (e) => {
         if (call !== c || !e || !e.isFinal || !e.text) return;
         c.heardVoice = true;
-        if (e.role === 'user') { if (c.partial) { c.partial.remove(); c.partial = null; } callLine('you', e.text); }
-        else { callLine('ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); }
+        if (e.role === 'user') { if (c.partial) { c.partial.remove(); c.partial = null; } callLine('tx-you', e.text); }
+        else { callLine('tx-ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('tx-sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); }
       });
       await v.start();
       if (call !== c) return;
@@ -765,13 +765,13 @@
         ch.on('message', (m) => {
           if (call !== c || !m || m.role === 'user' || c.heardVoice) return;
           const t = String(m.content || '').trim(); if (!t || /^please provide a message/i.test(t)) return;
-          t.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).forEach((x) => callLine('ari', x));
+          t.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).forEach((x) => callLine('tx-ari', x));
         });
         await ch.send(th ? 'สวัสดีค่ะ' : 'Hi');
       } catch (e) { console.warn('greeting send failed', e); }
-      if (call === c) { setConn('on', 'Live call'); ari('wave', sayL('hi'), 2200); callLine('sys', th ? '🎙 ไมโครโฟนเปิดแล้ว พูดได้เลย' : '🎙 Microphone on. Say hello to start.'); }
+      if (call === c) { setConn('on', 'Live call'); ari('wave', sayL('hi'), 2200); callLine('tx-sys', th ? '🎙 ไมโครโฟนเปิดแล้ว พูดได้เลย' : '🎙 Microphone on. Say hello to start.'); }
     } catch (e) {
-      if (call === c) { callLine('err', '⚠️ ' + errText(e)); setConn('err', 'Call failed'); console.error(e); endCall(true); }
+      if (call === c) { callLine('tx-err', '⚠️ ' + errText(e)); setConn('err', 'Call failed'); console.error(e); endCall(true); }
     }
   }
   async function startMic(c) {
@@ -809,10 +809,10 @@
     $('btnCall').classList.remove('on'); $('btnCall').lastElementChild.textContent = ' Call Ari';
     $('callSub').textContent = curLang === 'th' ? 'วางสายแล้ว' : 'Call ended';
     $('callMute').classList.remove('muted'); $('callMute').lastElementChild.textContent = ' Mute';
-    if (!keepTranscript) callLine('sys', curLang === 'th' ? 'วางสายแล้ว' : 'Call ended');
+    if (!keepTranscript) callLine('tx-sys', curLang === 'th' ? 'วางสายแล้ว' : 'Call ended');
     setConn('idle', 'Call ended');
     // Hang up closes the phone and returns to the page.
-    $('callLive').hidden = true; $('callView').classList.remove('live'); $('phone').classList.remove('live-call');
+    $('callLive').hidden = true; $('callView').classList.remove('on-call'); $('phone').classList.remove('live-call');
     $('callView').hidden = true; $('phone').hidden = true; $('stage').classList.remove('with-phone');
   }
   const errText = (e) => (!e ? 'Unknown error' : typeof e === 'string' ? e : e.message || (e.error && (e.error.message || e.error.code)) || e.code || JSON.stringify(e).slice(0, 200));
