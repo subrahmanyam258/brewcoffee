@@ -716,15 +716,16 @@
   async function startCall() {
     if (call) return;
     autoOn = false; runToken++; await teardown();
-    // Phase 1: the live call is an inbound call in English. Thai and outbound come next.
-    const p = profile(), callLang = 'en', th = false, entry = 'inbound';
+    // The live call is an inbound call. It starts in the header language (Thai by default)
+    // and the agents switch to English when the caller speaks English.
+    const p = profile(), callLang = curLang === 'en' ? 'en' : 'th', th = callLang === 'th', entry = 'inbound';
     $('chat').hidden = true; $('smsView').hidden = true;
     $('phone').hidden = false; $('phone').classList.add('live-call'); $('callView').hidden = false; $('callView').classList.add('live'); $('stage').classList.add('with-phone');
     $('callWho').textContent = th ? 'อารี · AIS (สายจริง)' : 'Ari · AIS (live call)';
     $('callSub').textContent = th ? 'กำลังเชื่อมต่อ…' : 'Connecting…';
     $('callLive').hidden = false; $('callTx').innerHTML = '';
     $('btnCall').classList.add('on'); $('btnCall').lastElementChild.textContent = th ? ' วางสาย' : ' Hang up';
-    callLine('sys', 'Inbound call in English. Speak after Ari greets you; you can cut in while Ari answers a question.');
+    callLine('sys', th ? 'สายโทรเข้า ภาษาไทย (พูดภาษาอังกฤษได้) พูดได้เลยเมื่ออารีทักทาย พูดแทรกระหว่างที่อารีตอบคำถามได้' : 'Inbound call in English (Thai works too). Speak after Ari greets you; you can cut in while Ari answers a question.');
     setConn('idle', 'Starting call…');
     const c = (call = { muted: false, partial: null });
     try {
