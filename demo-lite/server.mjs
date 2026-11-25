@@ -72,7 +72,7 @@ const TYPES = {
   '.png': 'image/png',
   '.json': 'application/json; charset=utf-8',
 };
-const PUBLIC = new Set(['/index.html', '/app.js', '/scenarios.js', '/styles.css', '/faqs.js', '/ari.png']);
+const PUBLIC = new Set(['/index.html', '/app.js', '/scenarios.js', '/styles.css', '/faqs.js', '/ari.png', '/greet-audio.js']);
 
 createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://localhost');

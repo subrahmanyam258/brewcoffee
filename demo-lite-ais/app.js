@@ -758,6 +758,8 @@
         if (c.lastLine === key && now - (c.lastLineAt || 0) < 6000) return;
         c.lastLine = key; c.lastLineAt = now;
         c.heardVoice = true;
+        if (e.role === 'user' && c.skipOpener) { c.skipOpener = false; return; }
+        if (e.role !== 'user') c.heardAri = true;
         if (e.role === 'user') { if (c.partial) { c.partial.remove(); c.partial = null; } callLine('tx-you', e.text); }
         else { checkBusyLink(c, e.text); callLine('tx-ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('tx-sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); }
       });
@@ -775,17 +777,19 @@
       // The SDK plays Ari's realtime audio but does not send the microphone in realtime mode,
       // so the page streams it: 24 kHz mono PCM16 in ~85 ms chunks over the same session.
       await startMic(c);
-      // Realtime voice waits for the caller, so open the conversation with a typed hello.
-      // Its text replies (greeting, amount, question) are shown in the call transcript.
+      // Open the call by voice: a short recorded "Hello" / "สวัสดีค่ะ" is sent as the caller's first
+      // words (the microphone pauses meanwhile), so Ari answers aloud straight away with one short
+      // line. The greeting and amount from that turn are shown as text in the phone.
       try {
         const ch = c.sdk.chat();
         ch.on('message', (m) => {
-          if (call !== c || !m || m.role === 'user' || c.heardVoice) return;
+          if (call !== c || !m || m.role === 'user' || c.heardAri) return;
           const t = String(m.content || '').trim(); if (!t || /^please provide a message/i.test(t)) return;
           t.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).forEach((x) => callLine('tx-ari', x));
         });
-        await ch.send(th ? 'สวัสดีค่ะ' : 'Hi');
-      } catch (e) { console.warn('greeting send failed', e); }
+        const clip = window.GREET_AUDIO && window.GREET_AUDIO[th ? 'th' : 'en'];
+        if (clip) await sendOpener(c, clip); else await ch.send(th ? 'สวัสดีค่ะ' : 'Hi');
+      } catch (e) { console.warn('opening failed', e); }
       if (call === c) { setConn('on', 'Live call'); ari('wave', sayL('hi'), 2200); callLine('tx-sys', th ? '🎙 ไมโครโฟนเปิดแล้ว พูดได้เลย' : '🎙 Microphone on. Say hello to start.'); }
     } catch (e) {
       if (call === c) { callLine('tx-err', '⚠️ ' + errText(e)); setConn('err', 'Call failed'); console.error(e); endCall(true); }
@@ -810,6 +814,17 @@
     const o = c.out; if (!o || !o.srcs.length) return;
     o.srcs.forEach((x) => { try { x.stop(); } catch { /* ignore */ } }); o.srcs = []; o.next = 0;
   }
+  async function sendOpener(c, b64) {
+    const sm = c.sdk.getSessionManager(), sid = c.sdk.getSessionId();
+    const bin = atob(b64), bytes = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    c.injecting = true; c.skipOpener = true;
+    const toB64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+    const step = 4800; // 100 ms at 24 kHz PCM16
+    for (let i = 0; i < bytes.length && call === c; i += step) { sm.send({ type: 'voice_audio', sessionId: sid, audio: toB64(bytes.subarray(i, i + step)) }); await sleep(100); }
+    const silence = toB64(new Uint8Array(step));
+    for (let k = 0; k < 8 && call === c; k++) { sm.send({ type: 'voice_audio', sessionId: sid, audio: silence }); await sleep(100); }
+    c.injecting = false;
+  }
   async function startMic(c) {
     const sm = c.sdk.getSessionManager(), sid = c.sdk.getSessionId();
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
@@ -819,18 +834,16 @@
     const proc = ctx.createScriptProcessor(2048, 1, 1);
     const ratio = ctx.sampleRate / 24000;
     proc.onaudioprocess = (e) => {
-      if (call !== c || c.muted || !sm.isConnected()) return;
+      if (call !== c || c.muted || c.injecting || !sm.isConnected()) return;
       const inp = e.inputBuffer.getChannelData(0);
-      // Barge-in: only loud, sustained speech from the caller (about 1/3 s) stops Ari's audio,
-      // and not in the first 0.8 s of a reply, so Ari's own voice through speakers cannot cut her off.
-      if (c.out && c.out.srcs.length && Date.now() - (c.out.startedAt || 0) > 800) {
+      // Barge-in on the realtime call: the microphone always streams, and as soon as the caller
+      // speaks (about 1/6 s of speech) Ari's audio stops so the caller never has to wait.
+      if (c.out && c.out.srcs.length) {
         let sum = 0; for (let i = 0; i < inp.length; i++) sum += inp[i] * inp[i];
-        c.loud = Math.sqrt(sum / inp.length) > 0.08 ? (c.loud || 0) + 1 : 0;
-        if (c.loud >= 4) { c.loud = 0; flushOut(c); }
+        c.loud = Math.sqrt(sum / inp.length) > 0.04 ? (c.loud || 0) + 1 : 0;
+        if (c.loud >= 2) { c.loud = 0; flushOut(c); }
       } else c.loud = 0;
-      // While Ari is playing (and the caller has not barged in), send silence instead of the
-      // microphone, so the realtime model does not hear Ari's own voice and cancel her reply.
-      const echoGuard = !!(c.out && c.out.srcs.length);
+      const echoGuard = false;
       const n = Math.floor(inp.length / ratio), out = new Int16Array(n);
       if (!echoGuard) for (let i = 0; i < n; i++) { const x = inp[Math.min(inp.length - 1, Math.floor(i * ratio))]; out[i] = Math.max(-1, Math.min(1, x)) * 0x7fff; }
       const bytes = new Uint8Array(out.buffer); let bin = '';
