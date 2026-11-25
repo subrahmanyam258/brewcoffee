@@ -30,7 +30,14 @@ function loadEnv() {
       if (m) env[m[1]] = m[2].replace(/^['"]|['"]$/g, '');
     }
   }
-  return { ...env, ...process.env };
+  // deploy-config.json (committed, public values only) pins this copy to its platform environment.
+  let pinned = {};
+  const pinFile = join(HERE, 'deploy-config.json');
+  if (existsSync(pinFile)) {
+    try { pinned = JSON.parse(readFileSync(pinFile, 'utf8')); } catch (e) { console.error('deploy-config.json is not valid JSON:', e.message); }
+  }
+  delete pinned._note;
+  return { ...env, ...process.env, ...pinned };
 }
 
 const env = loadEnv();
