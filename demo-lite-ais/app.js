@@ -658,6 +658,7 @@
     [['tBill', null, th0 ? `เลยกำหนด · ครบกำหนด ${p.due}` : `Overdue · due ${p.due}`, 'bad'], ['tPts', null, p.tier, ''], ['tRoam', th0 ? 'ยังไม่มีแพ็กเกจ' : 'No package', th0 ? 'พร้อมเดินทาง' : 'Ready to travel', ''], ['tSms', th0 ? 'ยังไม่ส่ง' : 'Not sent', th0 ? 'SMS ตามภาษาของการสนทนา' : 'SMS in the chat language', '']].forEach(([id, b, em, cls]) => { const el = $(id); if (b != null) el.querySelector('b').textContent = b; el.querySelector('em').textContent = em; el.classList.remove('good', 'bad', 'flash'); if (cls) el.classList.add(cls); });
     turnEl = null;
     if (call) endCall(true);
+    restoreChat();
     $('callLive').hidden = true; $('callView').classList.remove('on-call'); $('phone').classList.remove('live-call');
     $('chat').hidden = true; $('phone').hidden = true; $('callView').hidden = true; $('smsView').hidden = true; $('stage').classList.remove('with-phone');
     if ((entry === 'reminder_link' || entry === 'travel_link') && !fromSms) {
@@ -669,7 +670,8 @@
       setConn('idle', 'Waiting for the customer to tap the link');
       await new Promise((r) => { $('smsLink').onclick = r; if (autoOn) setTimeout(r, 1800); });
       if (token !== runToken) return;
-      $('phone').hidden = true; $('stage').classList.remove('with-phone');
+      // The customer tapped the SMS link: the web chat opens inside the phone.
+      mountChatInPhone();
     } else if (entry === 'inbound') {
       $('phone').hidden = false; $('callView').hidden = false; $('stage').classList.add('with-phone');
       $('callWho').textContent = 'AIS Contact Centre'; $('callSub').textContent = st.scenario.voice ? (curLang === 'th' ? 'โทรเข้า 2015009 · เชื่อมต่อแล้ว' : 'Inbound to 2015009 · connected') : (curLang === 'th' ? 'หมายเลขที่ลงทะเบียน · เชื่อมต่อแล้ว' : 'Registered number · connected');
@@ -726,7 +728,7 @@
     $('phone').hidden = false; $('phone').classList.add('live-call'); $('callView').hidden = false; $('callView').classList.add('on-call'); $('stage').classList.add('with-phone');
     $('callWho').textContent = th ? 'อารี · AIS (สายจริง)' : 'Ari · AIS (live call)';
     $('callSub').textContent = th ? 'กำลังเชื่อมต่อ…' : 'Connecting…';
-    $('callLive').hidden = false; $('callTx').innerHTML = '';
+    $('callLive').hidden = false; $('callTx').innerHTML = ''; { const ctl = document.querySelector('.call-ctl'); if (ctl) ctl.hidden = false; }
     $('btnCall').classList.add('on'); $('btnCall').lastElementChild.textContent = th ? ' วางสาย' : ' Hang up';
     callLine('tx-sys', th ? 'สายโทรเข้า ภาษาไทย (พูดภาษาอังกฤษได้) พูดได้เลยเมื่ออารีทักทาย พูดแทรกระหว่างที่อารีตอบคำถามได้' : 'Inbound call in English (Thai works too). Speak after Ari greets you; you can cut in while Ari answers a question.');
     setConn('idle', 'Starting call…');
@@ -756,7 +758,7 @@
         c.lastLine = key; c.lastLineAt = now;
         c.heardVoice = true;
         if (e.role === 'user') { if (c.partial) { c.partial.remove(); c.partial = null; } callLine('tx-you', e.text); }
-        else { callLine('tx-ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('tx-sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); }
+        else { checkBusyLink(c, e.text); callLine('tx-ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('tx-sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); }
       });
       await v.start();
       if (call !== c) return;
@@ -834,7 +836,7 @@
     try { m.stream.getTracks().forEach((t) => t.stop()); } catch { /* ignore */ }
     try { m.ctx.close(); } catch { /* ignore */ }
   }
-  async function endCall(keepTranscript) {
+  async function endCall(keepTranscript, keepPhone) {
     const c = call; call = null; if (!c) return;
     stopMic(c);
     try { c.offMsg && c.offMsg(); } catch { /* ignore */ }
@@ -847,9 +849,62 @@
     $('callMute').classList.remove('muted'); $('callMute').lastElementChild.textContent = ' Mute';
     if (!keepTranscript) callLine('tx-sys', curLang === 'th' ? 'วางสายแล้ว' : 'Call ended');
     setConn('idle', 'Call ended');
+    if (keepPhone) return;
     // Hang up closes the phone and returns to the page.
     $('callLive').hidden = true; $('callView').classList.remove('on-call'); $('phone').classList.remove('live-call');
     $('callView').hidden = true; $('phone').hidden = true; $('stage').classList.remove('with-phone');
+    $('phone').querySelectorAll('.sms-notice').forEach((n) => n.remove());
+  }
+
+  // ── "I'm busy" on the call → SMS notification → web chat inside the phone ──
+  const BUSY_LINK_RE = /text message with a link|sent you a link|ส่งข้อความ\s*SMS\s*พร้อมลิงก์|ลิงก์เข้าแชท/i;
+  function checkBusyLink(c, text) {
+    if (!c || c.busyLink || !BUSY_LINK_RE.test(text || '')) return;
+    c.busyLink = true;
+    const th = /[ก-๙]/.test(text);
+    // Let Ari finish the goodbye, then end the call but keep the phone on screen.
+    const t0 = Date.now();
+    const wait = () => {
+      const playing = c.out && c.out.srcs.length;
+      if (playing && Date.now() - t0 < 12000) return setTimeout(wait, 300);
+      setTimeout(async () => {
+        if (call === c) await endCall(true, true);
+        $('callSub').textContent = th ? 'วางสายแล้ว' : 'Call ended';
+        showSmsNotice(th);
+      }, 600);
+    };
+    setTimeout(wait, 800);
+  }
+  function showSmsNotice(th) {
+    const phone = $('phone'); phone.querySelectorAll('.sms-notice').forEach((n) => n.remove());
+    // The call is over: hide its controls and any SMS screen behind the notification.
+    const ctl = document.querySelector('.call-ctl'); if (ctl) ctl.hidden = true; $('smsView').hidden = true;
+    const n = document.createElement('button'); n.className = 'sms-notice'; n.type = 'button';
+    n.innerHTML = `<span class="sn-app">💬</span><span class="sn-body"><span class="sn-top"><b>${th ? 'ข้อความ' : 'Messages'}</b><small>${th ? 'เมื่อสักครู่' : 'now'}</small></span><b class="sn-from">AIS</b><span class="sn-text">${th ? 'AIS: ดำเนินการเรื่องค่าบริการ 3BB Fibre ต่อในแชทได้ที่' : 'AIS: continue with your 3BB Fibre bill in our chat:'} <u>ais.th/chat</u></span><span class="sn-cta">${th ? 'แตะเพื่อเปิดแชท' : 'Tap to open the chat'}</span></span>`;
+    n.onclick = () => openPhoneWebView(th);
+    phone.appendChild(n); phone.classList.remove('buzz'); void phone.offsetWidth; phone.classList.add('buzz');
+    addEvent(th ? '📩 ส่ง SMS พร้อมลิงก์แชทแล้ว' : '📩 SMS with the chat link sent to the customer');
+  }
+  const chatHome = { parent: null, next: null };
+  function restoreChat() {
+    const ch = $('chat'); if (!ch.classList.contains('in-phone')) return;
+    ch.classList.remove('in-phone'); if (chatHome.parent) chatHome.parent.insertBefore(ch, chatHome.next);
+    $('phone').classList.remove('webview');
+  }
+  async function openPhoneWebView(th) {
+    $('phone').querySelectorAll('.sms-notice').forEach((n) => n.remove());
+    const sc = SCEN.find((x) => x.id === 's2'); if (sc) { st.scenario = sc; $('ctlScenario').value = SCEN.indexOf(sc); }
+    st.lang = th ? 'th' : 'en'; st.entryOverride = 'reminder_link'; syncSeg(); renderPanel();
+    await run(true);
+    mountChatInPhone();
+  }
+  // Show the web chat inside the phone, as if the customer opened the link on the handset.
+  function mountChatInPhone() {
+    const ch = $('chat'), screen = $('phone').querySelector('.phone-screen');
+    if (!chatHome.parent) { chatHome.parent = ch.parentNode; chatHome.next = ch.nextSibling; }
+    $('callView').hidden = true; $('smsView').hidden = true; $('callLive').hidden = true; $('callView').classList.remove('on-call');
+    $('phone').classList.remove('live-call'); $('phone').classList.add('webview'); $('phone').hidden = false; $('stage').classList.add('with-phone');
+    ch.classList.add('in-phone'); screen.appendChild(ch);
   }
   const errText = (e) => (!e ? 'Unknown error' : typeof e === 'string' ? e : e.message || (e.error && (e.error.message || e.error.code)) || e.code || JSON.stringify(e).slice(0, 200));
   function onError(e, token) { if (token !== runToken) return; $('typing').hidden = true; addEvent('⚠️ ' + esc(errText(e)), 'err'); }

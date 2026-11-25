@@ -731,3 +731,22 @@ body.bar-collapsed { --barh: 0px; }
 .call.on-call .call-live { flex: 1 1 auto; width: 100%; display: flex; flex-direction: column; min-height: 0; }
 .call.on-call .call-tx { flex: 1 1 auto; height: auto; min-height: 0; width: 100%; }
 .call.on-call .call-tx p { max-width: 88%; word-break: normal; overflow-wrap: break-word; }
+
+/* ── Busy → SMS notification → web chat inside the phone ─────────────────── */
+.sms-notice { position: absolute; top: 46px; left: 20px; right: 20px; z-index: 9; display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 10px 12px; border: 0; border-radius: 16px; background: rgba(255,255,255,.97); box-shadow: 0 14px 30px rgba(15,23,42,.28); font: 400 12px Kanit, system-ui, sans-serif; color: #0f172a; cursor: pointer; animation: snDrop .45s cubic-bezier(.2,.9,.3,1.2) both; }
+.sms-notice:hover { background: #fff; }
+.sn-app { flex: none; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: #22c55e; font-size: 16px; }
+.sn-body { display: grid; gap: 1px; min-width: 0; }
+.sn-top { display: flex; justify-content: space-between; gap: 8px; color: #64748b; font-size: 10.5px; }
+.sn-top b { font-weight: 600; }
+.sn-from { font-size: 12.5px; }
+.sn-text { line-height: 1.3; overflow-wrap: anywhere; }
+.sn-text u { color: #0369a1; }
+.sn-cta { margin-top: 3px; color: #7ab800; font-weight: 600; font-size: 11px; }
+@keyframes snDrop { from { transform: translateY(-40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.phone.webview { width: 360px; height: 680px; }
+.phone .phone-screen { position: relative; }
+.chat.in-phone { position: absolute; inset: 36px 0 0 0; top: 36px; right: 0; bottom: 0; width: auto; max-height: none; border-radius: 0 0 26px 26px; box-shadow: none; z-index: 6; animation: none; }
+.chat.in-phone .chat-head { padding: 8px 10px; }
+@media (max-width: 900px) { .phone.webview { width: 300px; height: 600px; } }
+.call-ctl[hidden] { display: none; }
