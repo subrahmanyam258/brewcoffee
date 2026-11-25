@@ -715,6 +715,9 @@
   const CALL_STATE = { idle: 'Idle', connecting: 'Connecting…', listening: '🎙 Listening', processing: '… Thinking', speaking: '🔊 Ari is speaking', error: 'Error' };
   async function startCall() {
     if (call) return;
+    // Ari's audio player is created right here, inside the click, so Chrome lets it play.
+    let outCtx = null;
+    try { outCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 }); outCtx.resume(); } catch { outCtx = null; }
     autoOn = false; runToken++; await teardown();
     // The live call is an inbound call. It starts in the header language (Thai by default)
     // and the agents switch to English when the caller speaks English.
@@ -727,7 +730,7 @@
     $('btnCall').classList.add('on'); $('btnCall').lastElementChild.textContent = th ? ' วางสาย' : ' Hang up';
     callLine('tx-sys', th ? 'สายโทรเข้า ภาษาไทย (พูดภาษาอังกฤษได้) พูดได้เลยเมื่ออารีทักทาย พูดแทรกระหว่างที่อารีตอบคำถามได้' : 'Inbound call in English (Thai works too). Speak after Ari greets you; you can cut in while Ari answers a question.');
     setConn('idle', 'Starting call…');
-    const c = (call = { muted: false, partial: null });
+    const c = (call = { muted: false, partial: null, out: outCtx ? { ac: outCtx, next: 0, srcs: [] } : null });
     try {
       const AgentSDK = await loadSdk();
       const attrs = { web_language: callLang, web_entry: 'visit', web_authenticated: true, call_direction: 'inbound', ...p.attrs };
@@ -757,8 +760,15 @@
       });
       await v.start();
       if (call !== c) return;
-      // The SDK creates its realtime player after several awaits; make sure Chrome lets it play.
-      try { const pl = v.realtimePlayer; const ac = pl && pl.audioContext; if (ac && ac.state !== 'running') await ac.resume(); } catch { /* ignore */ }
+      // Play Ari's realtime audio with the page's own player (created in the click) and
+      // switch the SDK's player off, which Chrome can leave suspended after the awaits.
+      if (c.out) {
+        try { const pl = v.realtimePlayer; v.realtimePlayer = null; if (pl && pl.destroy) pl.destroy(); } catch { /* ignore */ }
+        c.offMsg = c.sdk.getSessionManager().on('message', (msg) => {
+          if (call !== c || !msg) return;
+          if (msg.type === 'voice_realtime_audio' && msg.audio) playChunk(c, msg.audio);
+        });
+      }
       // The SDK plays Ari's realtime audio but does not send the microphone in realtime mode,
       // so the page streams it: 24 kHz mono PCM16 in ~85 ms chunks over the same session.
       await startMic(c);
@@ -778,6 +788,24 @@
       if (call === c) { callLine('tx-err', '⚠️ ' + errText(e)); setConn('err', 'Call failed'); console.error(e); endCall(true); }
     }
   }
+  function playChunk(c, b64) {
+    const o = c.out; if (!o) return;
+    try {
+      if (o.ac.state !== 'running') o.ac.resume();
+      const bin = atob(b64), n = bin.length >> 1, f = new Float32Array(n);
+      for (let i = 0; i < n; i++) { let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); if (v >= 0x8000) v -= 0x10000; f[i] = v / 32768; }
+      const buf = o.ac.createBuffer(1, n, 24000); buf.getChannelData(0).set(f);
+      const src = o.ac.createBufferSource(); src.buffer = buf; src.connect(o.ac.destination);
+      const at = Math.max(o.ac.currentTime + 0.02, o.next); src.start(at); o.next = at + buf.duration;
+      o.srcs.push(src); src.onended = () => { o.srcs = o.srcs.filter((x) => x !== src); if (!o.srcs.length && call === c) $('callSub').textContent = CALL_STATE.listening; };
+      $('callSub').textContent = CALL_STATE.speaking;
+    } catch (e) { console.warn('play chunk failed', e); }
+  }
+  // The caller started talking: stop what Ari is saying (barge-in).
+  function flushOut(c) {
+    const o = c.out; if (!o || !o.srcs.length) return;
+    o.srcs.forEach((x) => { try { x.stop(); } catch { /* ignore */ } }); o.srcs = []; o.next = 0;
+  }
   async function startMic(c) {
     const sm = c.sdk.getSessionManager(), sid = c.sdk.getSessionId();
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
@@ -789,6 +817,8 @@
     proc.onaudioprocess = (e) => {
       if (call !== c || c.muted || !sm.isConnected()) return;
       const inp = e.inputBuffer.getChannelData(0);
+      // Barge-in: clear speech from the caller while Ari is talking stops Ari's audio.
+      if (c.out && c.out.srcs.length) { let sum = 0; for (let i = 0; i < inp.length; i++) sum += inp[i] * inp[i]; if (Math.sqrt(sum / inp.length) > 0.06) flushOut(c); }
       const n = Math.floor(inp.length / ratio), out = new Int16Array(n);
       for (let i = 0; i < n; i++) { const x = inp[Math.min(inp.length - 1, Math.floor(i * ratio))]; out[i] = Math.max(-1, Math.min(1, x)) * 0x7fff; }
       const bytes = new Uint8Array(out.buffer); let bin = '';
@@ -807,6 +837,8 @@
   async function endCall(keepTranscript) {
     const c = call; call = null; if (!c) return;
     stopMic(c);
+    try { c.offMsg && c.offMsg(); } catch { /* ignore */ }
+    if (c.out) { flushOut(c); try { c.out.ac.close(); } catch { /* ignore */ } }
     try { await c.voice?.stop(); } catch { /* ignore */ }
     try { await c.sdk?.endSession?.(); } catch { /* ignore */ }
     try { c.sdk?.disconnect?.(); } catch { /* ignore */ }
