@@ -749,6 +749,7 @@
       v.on('error', (e) => { if (call === c) callLine('err', '⚠️ ' + errText(e && e.error ? e.error : e)); });
       v.on('realtimeTranscript', (e) => {
         if (call !== c || !e || !e.isFinal || !e.text) return;
+        c.heardVoice = true;
         if (e.role === 'user') { if (c.partial) { c.partial.remove(); c.partial = null; } callLine('you', e.text); }
         else { callLine('ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); }
       });
@@ -757,6 +758,17 @@
       // The SDK plays Ari's realtime audio but does not send the microphone in realtime mode,
       // so the page streams it: 24 kHz mono PCM16 in ~85 ms chunks over the same session.
       await startMic(c);
+      // Realtime voice waits for the caller, so open the conversation with a typed hello.
+      // Its text replies (greeting, amount, question) are shown in the call transcript.
+      try {
+        const ch = c.sdk.chat();
+        ch.on('message', (m) => {
+          if (call !== c || !m || m.role === 'user' || c.heardVoice) return;
+          const t = String(m.content || '').trim(); if (!t || /^please provide a message/i.test(t)) return;
+          t.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).forEach((x) => callLine('ari', x));
+        });
+        await ch.send(th ? 'สวัสดีค่ะ' : 'Hi');
+      } catch (e) { console.warn('greeting send failed', e); }
       if (call === c) { setConn('on', 'Live call'); ari('wave', sayL('hi'), 2200); callLine('sys', th ? '🎙 ไมโครโฟนเปิดแล้ว พูดได้เลย' : '🎙 Microphone on. Say hello to start.'); }
     } catch (e) {
       if (call === c) { callLine('err', '⚠️ ' + errText(e)); setConn('err', 'Call failed'); console.error(e); endCall(true); }
@@ -799,6 +811,9 @@
     $('callMute').classList.remove('muted'); $('callMute').lastElementChild.textContent = ' Mute';
     if (!keepTranscript) callLine('sys', curLang === 'th' ? 'วางสายแล้ว' : 'Call ended');
     setConn('idle', 'Call ended');
+    // Hang up closes the phone and returns to the page.
+    $('callLive').hidden = true; $('callView').classList.remove('live'); $('phone').classList.remove('live-call');
+    $('callView').hidden = true; $('phone').hidden = true; $('stage').classList.remove('with-phone');
   }
   const errText = (e) => (!e ? 'Unknown error' : typeof e === 'string' ? e : e.message || (e.error && (e.error.message || e.error.code)) || e.code || JSON.stringify(e).slice(0, 200));
   function onError(e, token) { if (token !== runToken) return; $('typing').hidden = true; addEvent('⚠️ ' + esc(errText(e)), 'err'); }
