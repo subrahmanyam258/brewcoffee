@@ -576,15 +576,21 @@
       }
       setLang(isThai(text) ? 'th' : 'en', true);
       $('typingWho').textContent = AGENTS[agent] ? AGENTS[agent].ic : '';
-      $('typing').hidden = false; scrollDown(); await sleep(320); $('typing').hidden = true;
-      const row = addRow('bot', '', agent);
-      await typeOut(row.querySelector('.bubble'), text, token);
-      const m = $('mascot');
-      if (m && !m.classList.contains('walk')) ari('talk', null, 1400);
-      const tag = afterBot(text, agent);
-      if (tag) ari('talk', sayL('kb'), 2000);
-      if (tag) row.insertAdjacentHTML('beforeend', tag);
-      scrollDown();
+      // One platform message can carry several replies separated by a blank line
+      // (for example two FAQ answers, then the question again): show each as its own bubble.
+      const parts = text.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean);
+      for (const part of parts) {
+        if (token !== runToken || ended) return;
+        $('typing').hidden = false; scrollDown(); await sleep(320); $('typing').hidden = true;
+        const row = addRow('bot', '', agent);
+        await typeOut(row.querySelector('.bubble'), part, token);
+        const m = $('mascot');
+        if (m && !m.classList.contains('walk')) ari('talk', null, 1400);
+        const tag = afterBot(part, agent);
+        if (tag) ari('talk', sayL('kb'), 2000);
+        if (tag) row.insertAdjacentHTML('beforeend', tag);
+        scrollDown();
+      }
       endTimer = null;
       const bye = /(goodbye|สวัสดีค่ะ\s*$|สวัสดีครับ\s*$)/i.test(text);
       // The survey's goodbye (or the "chat has ended" reply) is final: lock the chat now so the
