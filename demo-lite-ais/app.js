@@ -747,14 +747,50 @@
       v.on('bargeIn', () => { if (call === c) callLine('sys', th ? '🎙 พูดแทรก' : '🎙 Barge-in'); });
       v.on('micPermissionDenied', () => { if (call === c) { callLine('err', th ? 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน' : 'Microphone permission was denied. Allow the mic and try again.'); endCall(true); } });
       v.on('error', (e) => { if (call === c) callLine('err', '⚠️ ' + errText(e && e.error ? e.error : e)); });
+      v.on('realtimeTranscript', (e) => {
+        if (call !== c || !e || !e.isFinal || !e.text) return;
+        if (e.role === 'user') { if (c.partial) { c.partial.remove(); c.partial = null; } callLine('you', e.text); }
+        else { callLine('ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); }
+      });
       await v.start();
-      if (call === c) { setConn('on', 'Live call'); ari('wave', sayL('hi'), 2200); }
+      if (call !== c) return;
+      // The SDK plays Ari's realtime audio but does not send the microphone in realtime mode,
+      // so the page streams it: 24 kHz mono PCM16 in ~85 ms chunks over the same session.
+      await startMic(c);
+      if (call === c) { setConn('on', 'Live call'); ari('wave', sayL('hi'), 2200); callLine('sys', th ? '🎙 ไมโครโฟนเปิดแล้ว พูดได้เลย' : '🎙 Microphone on. Say hello to start.'); }
     } catch (e) {
       if (call === c) { callLine('err', '⚠️ ' + errText(e)); setConn('err', 'Call failed'); console.error(e); endCall(true); }
     }
   }
+  async function startMic(c) {
+    const sm = c.sdk.getSessionManager(), sid = c.sdk.getSessionId();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } });
+    if (call !== c) { stream.getTracks().forEach((t) => t.stop()); return; }
+    let ctx; try { ctx = new AudioContext({ sampleRate: 24000 }); } catch { ctx = new AudioContext(); }
+    const src = ctx.createMediaStreamSource(stream);
+    const proc = ctx.createScriptProcessor(2048, 1, 1);
+    const ratio = ctx.sampleRate / 24000;
+    proc.onaudioprocess = (e) => {
+      if (call !== c || c.muted || !sm.isConnected()) return;
+      const inp = e.inputBuffer.getChannelData(0);
+      const n = Math.floor(inp.length / ratio), out = new Int16Array(n);
+      for (let i = 0; i < n; i++) { const x = inp[Math.min(inp.length - 1, Math.floor(i * ratio))]; out[i] = Math.max(-1, Math.min(1, x)) * 0x7fff; }
+      const bytes = new Uint8Array(out.buffer); let bin = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      sm.send({ type: 'voice_audio', sessionId: sid, audio: btoa(bin) });
+    };
+    src.connect(proc); proc.connect(ctx.destination);
+    c.mic = { stream, ctx, proc, src };
+  }
+  function stopMic(c) {
+    const m = c && c.mic; if (!m) return; c.mic = null;
+    try { m.proc.disconnect(); m.src.disconnect(); } catch { /* ignore */ }
+    try { m.stream.getTracks().forEach((t) => t.stop()); } catch { /* ignore */ }
+    try { m.ctx.close(); } catch { /* ignore */ }
+  }
   async function endCall(keepTranscript) {
     const c = call; call = null; if (!c) return;
+    stopMic(c);
     try { await c.voice?.stop(); } catch { /* ignore */ }
     try { await c.sdk?.endSession?.(); } catch { /* ignore */ }
     try { c.sdk?.disconnect?.(); } catch { /* ignore */ }
