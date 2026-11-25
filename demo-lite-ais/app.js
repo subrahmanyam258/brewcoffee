@@ -769,7 +769,7 @@
         ch.on('message', (m) => {
           if (call !== c || !m || m.role === 'user' || c.heardVoice) return;
           const t = String(m.content || '').trim(); if (!t || /^please provide a message/i.test(t)) return;
-          t.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).forEach((x) => { callLine('tx-ari', x); speakOpening(c, x); });
+          t.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).forEach((x) => callLine('tx-ari', x));
         });
         await ch.send(th ? 'สวัสดีค่ะ' : 'Hi');
       } catch (e) { console.warn('greeting send failed', e); }
@@ -777,23 +777,6 @@
     } catch (e) {
       if (call === c) { callLine('tx-err', '⚠️ ' + errText(e)); setConn('err', 'Call failed'); console.error(e); endCall(true); }
     }
-  }
-  // Realtime voice does not speak replies to the typed opening, so the page reads the
-  // opening messages aloud with the browser's own voice (Thai or English) and holds the
-  // microphone while it speaks, so Ari does not hear herself.
-  function speakOpening(c, text) {
-    try {
-      if (!('speechSynthesis' in window)) return;
-      const u = new SpeechSynthesisUtterance(text);
-      const thai = /[ก-๙]/.test(text); u.lang = thai ? 'th-TH' : 'en-IN';
-      const vs = speechSynthesis.getVoices(); const pick = vs.find((v) => v.lang === u.lang) || vs.find((v) => v.lang && v.lang.startsWith(thai ? 'th' : 'en'));
-      if (pick) u.voice = pick;
-      u.rate = 1;
-      c.speaking = (c.speaking || 0) + 1;
-      const done = () => { c.speaking = Math.max(0, (c.speaking || 1) - 1); };
-      u.onend = done; u.onerror = done;
-      speechSynthesis.speak(u);
-    } catch { /* ignore */ }
   }
   async function startMic(c) {
     const sm = c.sdk.getSessionManager(), sid = c.sdk.getSessionId();
@@ -804,7 +787,7 @@
     const proc = ctx.createScriptProcessor(2048, 1, 1);
     const ratio = ctx.sampleRate / 24000;
     proc.onaudioprocess = (e) => {
-      if (call !== c || c.muted || c.speaking || !sm.isConnected()) return;
+      if (call !== c || c.muted || !sm.isConnected()) return;
       const inp = e.inputBuffer.getChannelData(0);
       const n = Math.floor(inp.length / ratio), out = new Int16Array(n);
       for (let i = 0; i < n; i++) { const x = inp[Math.min(inp.length - 1, Math.floor(i * ratio))]; out[i] = Math.max(-1, Math.min(1, x)) * 0x7fff; }
@@ -824,7 +807,6 @@
   async function endCall(keepTranscript) {
     const c = call; call = null; if (!c) return;
     stopMic(c);
-    try { speechSynthesis.cancel(); } catch { /* ignore */ }
     try { await c.voice?.stop(); } catch { /* ignore */ }
     try { await c.sdk?.endSession?.(); } catch { /* ignore */ }
     try { c.sdk?.disconnect?.(); } catch { /* ignore */ }
