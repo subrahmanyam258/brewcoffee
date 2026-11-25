@@ -750,3 +750,19 @@ body.bar-collapsed { --barh: 0px; }
 .chat.in-phone .chat-head { padding: 8px 10px; }
 @media (max-width: 900px) { .phone.webview { width: 300px; height: 600px; } }
 .call-ctl[hidden] { display: none; }
+
+/* ── One phone size for every state (SMS, call, live call, web view) ─────────
+   The phone sits 500px from the stage's right edge; the mascot stands just left of it. */
+@media (min-width: 761px) {
+  .phone, .phone.live-call, .phone.webview { right: 500px; width: 330px; height: 650px; border-radius: 38px; }
+  .stage.with-phone .mascot { right: calc(var(--edge) + 500px + 330px + 18px); }
+  .call-tx { height: auto; }
+}
+@media (min-width: 761px) and (max-height: 780px) {
+  .phone, .phone.live-call, .phone.webview { width: 290px; height: 570px; }
+  .stage.with-phone .mascot { right: calc(var(--edge) + 500px + 290px + 18px); }
+}
+@media (min-width: 761px) and (max-width: 1200px) {
+  .phone, .phone.live-call, .phone.webview { width: 290px; height: 570px; }
+  .stage.with-phone .mascot { right: calc(var(--edge) + 500px + 290px + 14px); }
+}

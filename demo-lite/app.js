@@ -712,6 +712,7 @@
   let call = null;
   function callLine(cls, text) {
     const box = $('callTx'); if (!box) return null;
+    const last = box.lastElementChild; if (last && last.className === cls && last.textContent === text && cls === 'tx-ari') return last;
     const el = document.createElement('p'); el.className = cls; el.textContent = text; box.appendChild(el); box.scrollTop = box.scrollHeight; return el;
   }
   const CALL_STATE = { idle: 'Idle', connecting: 'Connecting…', listening: '🎙 Listening', processing: '… Thinking', speaking: '🔊 Ari is speaking', error: 'Error' };
@@ -798,6 +799,7 @@
       for (let i = 0; i < n; i++) { let v = bin.charCodeAt(2 * i) | (bin.charCodeAt(2 * i + 1) << 8); if (v >= 0x8000) v -= 0x10000; f[i] = v / 32768; }
       const buf = o.ac.createBuffer(1, n, 24000); buf.getChannelData(0).set(f);
       const src = o.ac.createBufferSource(); src.buffer = buf; src.connect(o.ac.destination);
+      if (!o.srcs.length) o.startedAt = Date.now();
       const at = Math.max(o.ac.currentTime + 0.02, o.next); src.start(at); o.next = at + buf.duration;
       o.srcs.push(src); src.onended = () => { o.srcs = o.srcs.filter((x) => x !== src); if (!o.srcs.length && call === c) $('callSub').textContent = CALL_STATE.listening; };
       $('callSub').textContent = CALL_STATE.speaking;
@@ -819,10 +821,18 @@
     proc.onaudioprocess = (e) => {
       if (call !== c || c.muted || !sm.isConnected()) return;
       const inp = e.inputBuffer.getChannelData(0);
-      // Barge-in: clear speech from the caller while Ari is talking stops Ari's audio.
-      if (c.out && c.out.srcs.length) { let sum = 0; for (let i = 0; i < inp.length; i++) sum += inp[i] * inp[i]; if (Math.sqrt(sum / inp.length) > 0.06) flushOut(c); }
+      // Barge-in: only loud, sustained speech from the caller (about 1/3 s) stops Ari's audio,
+      // and not in the first 0.8 s of a reply, so Ari's own voice through speakers cannot cut her off.
+      if (c.out && c.out.srcs.length && Date.now() - (c.out.startedAt || 0) > 800) {
+        let sum = 0; for (let i = 0; i < inp.length; i++) sum += inp[i] * inp[i];
+        c.loud = Math.sqrt(sum / inp.length) > 0.08 ? (c.loud || 0) + 1 : 0;
+        if (c.loud >= 4) { c.loud = 0; flushOut(c); }
+      } else c.loud = 0;
+      // While Ari is playing (and the caller has not barged in), send silence instead of the
+      // microphone, so the realtime model does not hear Ari's own voice and cancel her reply.
+      const echoGuard = !!(c.out && c.out.srcs.length);
       const n = Math.floor(inp.length / ratio), out = new Int16Array(n);
-      for (let i = 0; i < n; i++) { const x = inp[Math.min(inp.length - 1, Math.floor(i * ratio))]; out[i] = Math.max(-1, Math.min(1, x)) * 0x7fff; }
+      if (!echoGuard) for (let i = 0; i < n; i++) { const x = inp[Math.min(inp.length - 1, Math.floor(i * ratio))]; out[i] = Math.max(-1, Math.min(1, x)) * 0x7fff; }
       const bytes = new Uint8Array(out.buffer); let bin = '';
       for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
       sm.send({ type: 'voice_audio', sessionId: sid, audio: btoa(bin) });
