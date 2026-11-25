@@ -22,6 +22,7 @@
     <button id="btnStart" class="btn start">▶<span class="bl"> Start</span></button>
     <button id="btnAuto" class="btn ghost">⏯<span class="bl"> Auto-play</span></button>
     <button id="btnScript" class="btn ghost">📝<span class="bl"> Script</span></button>
+    <button id="btnCall" class="btn call-btn" hidden>📞<span class="bl"> Call Ari</span></button>
     <span id="conn" class="conn idle"><i></i><span>Ready</span></span>
   </header>
 
@@ -61,6 +62,14 @@
             <b id="callWho">AIS Contact Centre</b>
             <small id="callSub">Registered number · connected</small>
             <div class="wave"><i></i><i></i><i></i><i></i><i></i></div>
+            <!-- Live browser call (Web SDK voice): transcript and controls -->
+            <div class="call-live" id="callLive" hidden>
+              <div class="call-tx" id="callTx" aria-live="polite"></div>
+              <div class="call-ctl">
+                <button id="callMute" class="cbtn">🎙<span> Mute</span></button>
+                <button id="callEnd" class="cbtn end">⏹<span> End</span></button>
+              </div>
+            </div>
           </div>
           <div class="sms" id="smsView" hidden>
             <div class="sms-head">💬 Messages · AIS</div>

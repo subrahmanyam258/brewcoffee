@@ -53,6 +53,16 @@
   function syncSeg() { document.querySelectorAll('#ctlLang button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.lang)); }
   $('btnStart').onclick = () => { autoOn = false; run(); };
   $('btnScript').onclick = () => { $('drawer').hidden = !$('drawer').hidden; };
+  // Live browser voice call (Web SDK voice). Shown only where the key and channel allow voice.
+  if (cfg.voiceCall) { $('btnCall').hidden = false; $('btnCall').onclick = () => (call ? endCall() : startCall()); }
+  $('callEnd').onclick = () => endCall();
+  $('callMute').onclick = () => {
+    if (!call || !call.voice) return;
+    call.muted = !call.muted;
+    try { call.muted ? call.voice.mute() : call.voice.unmute(); } catch { /* ignore */ }
+    $('callMute').classList.toggle('muted', call.muted);
+    $('callMute').lastElementChild.textContent = call.muted ? ' Unmute' : ' Mute';
+  };
   $('drawerClose').onclick = () => { $('drawer').hidden = true; };
   $('btnAuto').onclick = async () => { autoOn = true; await run(); autoPlay(runToken); };
 
@@ -628,6 +638,8 @@
     const th0 = curLang === 'th';
     [['tBill', null, th0 ? `เลยกำหนด · ครบกำหนด ${p.due}` : `Overdue · due ${p.due}`, 'bad'], ['tPts', null, p.tier, ''], ['tRoam', th0 ? 'ยังไม่มีแพ็กเกจ' : 'No package', th0 ? 'พร้อมเดินทาง' : 'Ready to travel', ''], ['tSms', th0 ? 'ยังไม่ส่ง' : 'Not sent', th0 ? 'SMS ตามภาษาของการสนทนา' : 'SMS in the chat language', '']].forEach(([id, b, em, cls]) => { const el = $(id); if (b != null) el.querySelector('b').textContent = b; el.querySelector('em').textContent = em; el.classList.remove('good', 'bad', 'flash'); if (cls) el.classList.add(cls); });
     turnEl = null;
+    if (call) endCall(true);
+    $('callLive').hidden = true; $('callView').classList.remove('live');
     $('chat').hidden = true; $('phone').hidden = true; $('callView').hidden = true; $('smsView').hidden = true; $('stage').classList.remove('with-phone');
     if ((entry === 'reminder_link' || entry === 'travel_link') && !fromSms) {
       $('phone').hidden = false; $('smsView').hidden = false; $('stage').classList.add('with-phone');
@@ -670,6 +682,66 @@
       try { await sdk.connect({ initialMessage: hello }); } catch (e) { if (!/initialMessage|ticket/i.test(String(e && e.message))) throw e; await sdk.connect(); await chat.send(hello); }
       if (token === runToken) setConn('on', 'Live session');
     } catch (e) { fail(e, token); }
+  }
+  // ── live browser call ─────────────────────────────────────────────────────
+  // A separate SDK session in voice mode: the microphone goes to the platform's
+  // speech-to-text, the same agents answer, and the reply is spoken back. The
+  // agents see the channel as voice, so the voice rules (barge-in, Thai/English
+  // switching, keypad-style survey) apply exactly as on a phone call.
+  let call = null;
+  function callLine(cls, text) {
+    const box = $('callTx'); if (!box) return null;
+    const el = document.createElement('p'); el.className = cls; el.textContent = text; box.appendChild(el); box.scrollTop = box.scrollHeight; return el;
+  }
+  const CALL_STATE = { idle: 'Idle', connecting: 'Connecting…', listening: '🎙 Listening', processing: '… Thinking', speaking: '🔊 Ari is speaking', error: 'Error' };
+  async function startCall() {
+    if (call) return;
+    autoOn = false; runToken++; await teardown();
+    const p = profile(), th = curLang === 'th', entry = st.scenario.entry === 'inbound' ? 'inbound' : 'outbound_call';
+    $('chat').hidden = true; $('smsView').hidden = true;
+    $('phone').hidden = false; $('callView').hidden = false; $('callView').classList.add('live'); $('stage').classList.add('with-phone');
+    $('callWho').textContent = th ? 'อารี · AIS (สายจริง)' : 'Ari · AIS (live call)';
+    $('callSub').textContent = th ? 'กำลังเชื่อมต่อ…' : 'Connecting…';
+    $('callLive').hidden = false; $('callTx').innerHTML = '';
+    $('btnCall').classList.add('on'); $('btnCall').lastElementChild.textContent = th ? ' วางสาย' : ' Hang up';
+    callLine('sys', th ? 'พูดได้เลยเมื่อได้ยินอารี พูดแทรกระหว่างที่อารีตอบคำถามได้' : 'Speak after Ari greets you. You can cut in while Ari answers a question.');
+    setConn('idle', 'Starting call…');
+    const c = (call = { muted: false, partial: null });
+    try {
+      const AgentSDK = await loadSdk();
+      const attrs = { web_language: curLang, web_entry: 'visit', web_authenticated: entry === 'inbound', call_direction: entry === 'inbound' ? 'inbound' : 'outbound', ...p.attrs };
+      const opts = { endpoint: cfg.endpoint, projectId: cfg.projectId, apiKey: cfg.apiKey, userContext: { userId: `demo-lite-call-${st.profile}-${Date.now()}`, customAttributes: attrs } };
+      if (cfg.channelId) opts.channelId = cfg.channelId;
+      c.sdk = new AgentSDK(opts);
+      c.sdk.on('sessionStart', (e) => { $('sessId').textContent = e.sessionId || '—'; });
+      c.sdk.on('error', (e) => { if (call === c) callLine('err', '⚠️ ' + errText(e)); });
+      c.sdk.on('sessionEnd', () => { if (call === c) endCall(true); });
+      await c.sdk.connect();
+      if (call !== c) return;
+      const v = (c.voice = c.sdk.voice());
+      v.on('stateChange', (e) => { if (call !== c) return; $('callSub').textContent = CALL_STATE[e.state] || e.state; setConn(e.state === 'error' ? 'err' : 'on', 'Live call · ' + (CALL_STATE[e.state] || e.state)); });
+      v.on('transcription', (e) => { if (call !== c || e.isFinal) return; if (!c.partial) c.partial = callLine('you live-partial', e.text); else c.partial.textContent = e.text; $('callTx').scrollTop = 1e9; });
+      v.on('transcriptionFinal', (e) => { if (call !== c) return; if (c.partial) { c.partial.remove(); c.partial = null; } if (e.text) { callLine('you', e.text); setLang(isThai(e.text) ? 'th' : curLang, true); } });
+      v.on('responseEnd', (e) => { if (call !== c || !e.text) return; callLine('ari', e.text); const tag = afterBot(e.text, null); if (tag) callLine('sys', tag.replace(/<[^>]+>/g, '')); ari('talk', null, 1400); });
+      v.on('bargeIn', () => { if (call === c) callLine('sys', th ? '🎙 พูดแทรก' : '🎙 Barge-in'); });
+      v.on('micPermissionDenied', () => { if (call === c) { callLine('err', th ? 'ไม่ได้รับอนุญาตให้ใช้ไมโครโฟน' : 'Microphone permission was denied. Allow the mic and try again.'); endCall(true); } });
+      v.on('error', (e) => { if (call === c) callLine('err', '⚠️ ' + errText(e && e.error ? e.error : e)); });
+      await v.start();
+      if (call === c) { setConn('on', 'Live call'); ari('wave', sayL('hi'), 2200); }
+    } catch (e) {
+      if (call === c) { callLine('err', '⚠️ ' + errText(e)); setConn('err', 'Call failed'); console.error(e); endCall(true); }
+    }
+  }
+  async function endCall(keepTranscript) {
+    const c = call; call = null; if (!c) return;
+    try { await c.voice?.stop(); } catch { /* ignore */ }
+    try { await c.sdk?.endSession?.(); } catch { /* ignore */ }
+    try { c.sdk?.disconnect?.(); } catch { /* ignore */ }
+    $('btnCall').classList.remove('on'); $('btnCall').lastElementChild.textContent = ' Call Ari';
+    $('callSub').textContent = curLang === 'th' ? 'วางสายแล้ว' : 'Call ended';
+    $('callMute').classList.remove('muted'); $('callMute').lastElementChild.textContent = ' Mute';
+    if (!keepTranscript) callLine('sys', curLang === 'th' ? 'วางสายแล้ว' : 'Call ended');
+    setConn('idle', 'Call ended');
   }
   const errText = (e) => (!e ? 'Unknown error' : typeof e === 'string' ? e : e.message || (e.error && (e.error.message || e.error.code)) || e.code || JSON.stringify(e).slice(0, 200));
   function onError(e, token) { if (token !== runToken) return; $('typing').hidden = true; addEvent('⚠️ ' + esc(errText(e)), 'err'); }

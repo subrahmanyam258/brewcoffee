@@ -1,7 +1,8 @@
 {
-  "_note": "Staging connection for threebb-demo-lite.onrender.com. Public SDK key only (pk_), safe to commit. Overrides the host's ENDPOINT/PROJECT_ID/SDK_PUBLIC_KEY/CHANNEL_ID when present.",
+  "_note": "Staging connection for threebb-demo-lite.onrender.com. Public SDK key only (pk_), safe to commit. Overrides the host's ENDPOINT/PROJECT_ID/SDK_PUBLIC_KEY/CHANNEL_ID/VOICE_CALL when present.",
   "ENDPOINT": "https://agents-staging.kore.ai",
   "PROJECT_ID": "01a21190-6e63-73fa-bfd1-624d3300fbc3",
-  "SDK_PUBLIC_KEY": "pk_9af7cd4badb311b14fe8ac370688ce154aa5191934eb6594",
-  "CHANNEL_ID": "01a21195-1a87-71f5-8227-79cf6680c2ec"
+  "SDK_PUBLIC_KEY": "pk_73f1da6f5c5b758052e49b94ab470eb82c6584e3b845a22b",
+  "CHANNEL_ID": "01a21198-687b-7db3-becd-cb2a280aa564",
+  "VOICE_CALL": "true"
 }

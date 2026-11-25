@@ -46,9 +46,11 @@ const config = {
   projectId: env.PROJECT_ID || '',
   apiKey: env.SDK_PUBLIC_KEY || '',
   channelId: env.CHANNEL_ID || '',
+  // Shows the "Call Ari" browser voice call. Needs a public key and channel with voice enabled.
+  voiceCall: /^(1|true|yes|on)$/i.test(String(env.VOICE_CALL || '')),
 };
 const missing = Object.entries(config)
-  .filter(([k, v]) => !v && k !== 'channelId')
+  .filter(([k, v]) => !v && k !== 'channelId' && k !== 'voiceCall')
   .map(([k]) => k);
 if (missing.length) {
   console.error(`Missing settings in demos/3bb-demo-lite/.env: ${missing.join(', ')}`);
