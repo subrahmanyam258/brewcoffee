@@ -716,3 +716,10 @@ body.bar-collapsed { --barh: 0px; }
 .call-tx { height: 330px; }
 .call-tx p { overflow-wrap: anywhere; box-sizing: border-box; }
 @media (max-width: 900px) { .phone.live-call { width: 260px; height: 540px; } .call-tx { height: 270px; } }
+.call-wrap { position: relative; display: inline-flex; }
+.call-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; display: grid; gap: 4px; min-width: 230px; padding: 6px; border-radius: 12px; background: #fff; box-shadow: 0 12px 30px rgba(0,0,0,.18); }
+.call-menu[hidden] { display: none; }
+.call-menu button { display: grid; text-align: left; gap: 1px; border: 0; border-radius: 8px; padding: 8px 10px; background: transparent; color: #0f172a; font: 600 13px Kanit, system-ui, sans-serif; cursor: pointer; }
+.call-menu button:hover { background: #f1f5f9; }
+.call-menu button[hidden] { display: none; }
+.call-menu small { font-weight: 400; color: #64748b; font-size: 11px; }

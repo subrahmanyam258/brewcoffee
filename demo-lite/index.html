@@ -22,7 +22,13 @@
     <button id="btnStart" class="btn start">▶<span class="bl"> Start</span></button>
     <button id="btnAuto" class="btn ghost">⏯<span class="bl"> Auto-play</span></button>
     <button id="btnScript" class="btn ghost">📝<span class="bl"> Script</span></button>
-    <button id="btnCall" class="btn call-btn" hidden>📞<span class="bl"> Call Ari</span></button>
+    <span class="call-wrap">
+      <button id="btnCall" class="btn call-btn" hidden>📞<span class="bl"> Call Ari</span></button>
+      <span class="call-menu" id="callMenu" hidden>
+        <button data-mode="phone">☎️ Phone line<small>Voice pipeline · Microsoft speech</small></button>
+        <button data-mode="realtime">⚡ Realtime<small>GPT Realtime 2 · in this page</small></button>
+      </span>
+    </span>
     <span id="conn" class="conn idle"><i></i><span>Ready</span></span>
   </header>
 

@@ -54,7 +54,26 @@
   $('btnStart').onclick = () => { autoOn = false; run(); };
   $('btnScript').onclick = () => { $('drawer').hidden = !$('drawer').hidden; };
   // Live browser voice call (Web SDK voice). Shown only where the key and channel allow voice.
-  if (cfg.voiceCall) { $('btnCall').hidden = false; $('btnCall').onclick = () => (call ? endCall() : startCall()); }
+  // Two ways to call Ari: the pipeline phone line (public softphone link, opens a call window)
+  // and the realtime voice call inside the page. Each shows only when it is configured.
+  const callModes = [cfg.phoneShareUrl ? 'phone' : null, cfg.voiceCall ? 'realtime' : null].filter(Boolean);
+  if (callModes.length) {
+    $('btnCall').hidden = false;
+    $('callMenu').querySelectorAll('button').forEach((b) => { b.hidden = !callModes.includes(b.dataset.mode); b.onclick = () => { $('callMenu').hidden = true; b.dataset.mode === 'phone' ? openPhoneLine() : startCall(); }; });
+    $('btnCall').onclick = (e) => {
+      e.stopPropagation();
+      if (call) return endCall();
+      if (callModes.length === 1) return callModes[0] === 'phone' ? openPhoneLine() : startCall();
+      $('callMenu').hidden = !$('callMenu').hidden;
+    };
+    document.addEventListener('click', (e) => { if (!e.target.closest('.call-wrap')) $('callMenu').hidden = true; });
+  }
+  function openPhoneLine() {
+    const w = window.open(cfg.phoneShareUrl, 'ari_phone_line', 'popup=yes,width=440,height=760');
+    if (!w) { addEvent('⚠️ The browser blocked the call window. Allow pop-ups for this site, then press Call Ari again.', 'err'); return; }
+    try { w.focus(); } catch { /* ignore */ }
+    addEvent('☎️ Phone line opened in a call window (voice pipeline). Press the call button there and allow the microphone.');
+  }
   $('callEnd').onclick = () => endCall();
   $('callMute').onclick = () => {
     if (!call || !call.voice) return;

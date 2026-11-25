@@ -48,9 +48,11 @@ const config = {
   channelId: env.CHANNEL_ID || '',
   // Shows the "Call Ari" browser voice call. Needs a public key and channel with voice enabled.
   voiceCall: /^(1|true|yes|on)$/i.test(String(env.VOICE_CALL || '')),
+  // Public softphone share link for a pipeline voice channel (opens in a call window).
+  phoneShareUrl: /^https:\/\//.test(env.PHONE_SHARE_URL || '') ? env.PHONE_SHARE_URL : '',
 };
 const missing = Object.entries(config)
-  .filter(([k, v]) => !v && k !== 'channelId' && k !== 'voiceCall')
+  .filter(([k, v]) => !v && k !== 'channelId' && k !== 'voiceCall' && k !== 'phoneShareUrl')
   .map(([k]) => k);
 if (missing.length) {
   console.error(`Missing settings in demos/3bb-demo-lite/.env: ${missing.join(', ')}`);
